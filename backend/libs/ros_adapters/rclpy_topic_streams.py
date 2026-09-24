@@ -82,6 +82,34 @@ class RclpyRuntimeTopicSubscriptionGateway:
         )
         return RclpyRuntimeTopicSubscriptionHandle(ros_subscription)
 
+    def _subscription_qos(self, topic: str) -> Any:
+        """Match the publishers the way `ros2 topic echo` does.
+
+        A fixed volatile profile connects to a transient-local publisher but never
+        receives the sample it holds, so a topic published once (a latched status or
+        configuration) stayed blank here while `ros2 topic echo` showed it.
+        """
+        try:
+            from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+        except ModuleNotFoundError:
+            return self._qos_profile
+
+        try:
+            publishers = self._node.get_publishers_info_by_topic(topic)
+        except Exception:  # noqa: BLE001 - discovery trouble must not block the subscription
+            logger.debug("Could not read publisher QoS for %s", topic, exc_info=True)
+            publishers = []
+        profiles = [info.qos_profile for info in publishers]
+
+        qos = QoSProfile(depth=self._qos_profile)
+        # All publishers must keep their last sample, or a transient-local reader would not match the rest.
+        if profiles and all(profile.durability == DurabilityPolicy.TRANSIENT_LOCAL for profile in profiles):
+            qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+        # A reliable reader never matches a best-effort writer.
+        if any(profile.reliability == ReliabilityPolicy.BEST_EFFORT for profile in profiles):
+            qos.reliability = ReliabilityPolicy.BEST_EFFORT
+        return qos
+
     def _resolve_topic_message_type(self, topic: str) -> str:
         for topic_name, message_types in self._node.get_topic_names_and_types():
             if topic_name == topic and message_types:
