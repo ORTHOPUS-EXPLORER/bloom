@@ -193,6 +193,7 @@ class RosServiceCallResponse(BaseModel):
     status: str
     success: bool | None
     detail: str
+    response: dict[str, Any] = Field(default_factory=dict)
 
 
 class RosTopicPublishResponse(BaseModel):
@@ -569,6 +570,7 @@ def call_ros_service(
         status=receipt.status,
         success=receipt.success,
         detail=receipt.detail,
+        response=receipt.response,
     )
 
 

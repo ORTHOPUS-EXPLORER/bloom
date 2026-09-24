@@ -30,6 +30,8 @@ class RosServiceReceipt:
     #: The response's ``success`` field, or None when the type has none.
     success: bool | None
     detail: str
+    #: Every response field, so a non-Trigger answer is not reduced to a status.
+    response: dict[str, Any] = field(default_factory=dict)
 
 
 class RosServiceGateway(Protocol):
@@ -67,6 +69,9 @@ class RclpyRosServiceGateway:
         ros_request = build_service_request(service_cls, request.payload)
         client = self._ensure_client(request, service_cls)
 
+        # Built before waiting on the service, so a bad payload fails as a 422
+        # even when the server is down.
+        service_request = self._build_request(service_cls, request.payload)
         if not client.wait_for_service(timeout_sec=self._wait_for_service_sec):
             raise RuntimeError(f"Service {request.service} is not available.")
 
@@ -83,6 +88,42 @@ class RclpyRosServiceGateway:
             raise RuntimeError(f"Service {request.service} did not answer within {self._response_timeout_sec}s.")
 
         return receipt_from_response(request, future.result())
+
+    @staticmethod
+    def _build_request(service_cls: type, payload: dict[str, Any]) -> Any:
+        service_request = service_cls.Request()
+        if not payload:
+            return service_request
+        try:
+            from rosidl_runtime_py.set_message import set_message_fields
+        except ModuleNotFoundError as exc:
+            raise RuntimeError("rosidl_runtime_py is required to call ROS services") from exc
+
+        try:
+            set_message_fields(service_request, payload)
+        except (AttributeError, TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid ROS service request: {exc}") from exc
+        return service_request
+
+    @staticmethod
+    def _response_to_dict(response: Any) -> dict[str, Any]:
+        try:
+            from rosidl_runtime_py.convert import message_to_ordereddict
+        except ModuleNotFoundError:
+            return {}
+        try:
+            return json.loads(json.dumps(message_to_ordereddict(response), default=str))
+        except (AttributeError, TypeError, ValueError):
+            return {}
+
+    @staticmethod
+    def _summarize(service: str, response_fields: dict[str, Any]) -> str:
+        if not response_fields:
+            return f"Service {service} answered."
+        summary = json.dumps(response_fields, default=str)
+        if len(summary) > 200:
+            summary = f"{summary[:197]}..."
+        return f"Service {service} answered: {summary}"
 
     def _ensure_client(self, request: RosServiceRequest, service_cls: type) -> Any:
         key = (request.service, request.service_type)
