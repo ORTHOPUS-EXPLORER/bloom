@@ -16,6 +16,7 @@ export type SliderSettings = {
   hide_title?: boolean;
   binding?: string;
   direction: "horizontal" | "vertical";
+  hide_value?: boolean;
   intent_label: string;
   max: number;
   messageType?: string;
@@ -67,6 +68,7 @@ export const sliderContract = createContract(
     },
     { key: "hide_title", label: "Hide the card title", type: "boolean", required: false },
     { key: "show_details", label: "Show runtime details", type: "boolean", required: true },
+    { key: "hide_value", label: "Hide the live value", type: "boolean", required: false },
     { key: "topic", label: "Output topic", type: "text", required: false },
     { key: "messageType", label: "ROS message type", type: "text", required: false },
     { key: "runtime_binding", label: "Runtime binding", type: "json", required: false },
@@ -95,6 +97,7 @@ function validateSliderSettings(settings: Record<string, unknown>): WidgetSettin
       : []),
     ...validateBoolean(settings, "returnToCenter"),
     ...validateBoolean(settings, "show_details"),
+    ...("hide_value" in settings && settings.hide_value !== undefined ? validateBoolean(settings, "hide_value") : []),
     ...("topic" in settings && settings.topic !== undefined
       ? validateString(settings, "topic", { allowEmpty: true })
       : []),

@@ -72,6 +72,8 @@ export function SliderWidget({
   const direction = getStringSetting(sliderSettings, "direction", "vertical");
   const returnToCenter = getBooleanSetting(sliderSettings, "returnToCenter", false);
   const showDetails = getBooleanSetting(sliderSettings, "show_details", false);
+  // Only the visible number goes; screen readers still hear where the control came to rest.
+  const hideValue = getBooleanSetting(sliderSettings, "hide_value", false);
   const intentLabel = getStringSetting(sliderSettings, "intent_label", "");
   const unit = getStringSetting(sliderSettings, "unit", "");
   const configuredValue = getNumberSetting(sliderSettings, "value", 0);
@@ -321,7 +323,7 @@ export function SliderWidget({
         {hidesTitle(descriptor.widget.settings) ? null : (
           <header className="bloom-widget-head">
             <strong>{descriptor.widget.title}</strong>
-            <output className="bloom-widget-readout">{formattedValue}</output>
+            {hideValue ? null : <output className="bloom-widget-readout">{formattedValue}</output>}
           </header>
         )}
         <fieldset aria-label={descriptor.widget.title} className="bloom-segments">
@@ -357,7 +359,7 @@ export function SliderWidget({
         {hidesTitle(descriptor.widget.settings) ? null : (
           <header className="bloom-widget-head">
             <strong>{descriptor.widget.title}</strong>
-            <output aria-live="polite" className="bloom-widget-readout">
+            <output aria-live="polite" className={hideValue ? "sr-only" : "bloom-widget-readout"}>
               {formattedValue}
             </output>
           </header>
@@ -400,18 +402,22 @@ export function SliderWidget({
       {placement === "above" && !hidesTitle(descriptor.widget.settings) ? (
         <header className="bloom-widget-head">
           <strong>{descriptor.widget.title}</strong>
-          <output aria-live="off" className="bloom-widget-readout">
-            {readout}
-          </output>
+          {hideValue ? null : (
+            <output aria-live="off" className="bloom-widget-readout">
+              {readout}
+            </output>
+          )}
         </header>
       ) : null}
       <div className="bloom-control-surface bloom-axis-surface">
         {placement === "overlay" ? (
           <>
             <strong className="bloom-axis-title">{descriptor.widget.title}</strong>
-            <output aria-live="off" className="bloom-axis-readout">
-              {readout}
-            </output>
+            {hideValue ? null : (
+              <output aria-live="off" className="bloom-axis-readout">
+                {readout}
+              </output>
+            )}
           </>
         ) : null}
         <span aria-hidden="true" className="bloom-axis-word" data-end="negative">

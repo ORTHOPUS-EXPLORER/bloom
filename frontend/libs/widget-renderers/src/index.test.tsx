@@ -619,6 +619,27 @@ describe("widget renderer registry", () => {
     expect(document.querySelector(".bloom-widget-head .bloom-widget-readout")).toHaveTextContent("x +0.00 y +0.00");
   });
 
+  it("hides the live joystick and slider values when hide_value is set", () => {
+    const withHiddenValue = (source: ScreenConfig): ScreenConfig => ({
+      ...source,
+      widgets: source.widgets.map((widget) => ({ ...widget, settings: { ...widget.settings, hide_value: true } })),
+    });
+
+    const [joystick] = renderScreenDescriptors(withHiddenValue(joystickDebugScreen), createDefaultWidgetRegistry());
+    if (!joystick) throw new Error("Missing joystick descriptor.");
+    render(<div>{renderWidgetDescriptor(joystick)}</div>);
+    expect(document.querySelector(".bloom-widget-readout, .bloom-pad-readout")).toBeNull();
+    // Screen readers still hear where the pad came to rest.
+    expect(document.querySelector("output.sr-only")?.textContent).toBe("x 0.00 y 0.00");
+    cleanup();
+
+    const [slider] = renderScreenDescriptors(withHiddenValue(sliderScreen), createDefaultWidgetRegistry());
+    if (!slider) throw new Error("Missing slider descriptor.");
+    render(<div>{renderWidgetDescriptor(slider)}</div>);
+    expect(document.querySelector(".bloom-widget-readout, .bloom-axis-readout")).toBeNull();
+    expect(screen.getByText("0.80 m/s")).toHaveClass("sr-only");
+  });
+
   it("emits gesture value-change intents from trajectory pads", () => {
     const descriptor = renderScreenDescriptors(gesturePadScreen, createDefaultWidgetRegistry())[0];
     if (!descriptor) throw new Error("Missing gesture pad descriptor.");

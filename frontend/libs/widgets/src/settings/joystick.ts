@@ -38,6 +38,7 @@ export type JoystickSettings = {
     y: JoystickAxisHint;
   };
   deadzone: number;
+  hide_value?: boolean;
   labels: {
     bottom: string;
     left: string;
@@ -92,6 +93,7 @@ export const joystickContract = createContract(
     { key: "publish_rate_hz", label: "Publish rate", type: "number", required: true },
     { key: "hide_title", label: "Hide the card title", type: "boolean", required: false },
     { key: "show_details", label: "Show runtime details", type: "boolean", required: true },
+    { key: "hide_value", label: "Hide the live value", type: "boolean", required: false },
     { key: "zero_on_release", label: "Zero on release", type: "boolean", required: true },
     { key: "labels", label: "Axis labels", type: "json", required: true },
     { key: "axis_hints", label: "Axis hints", type: "json", required: true },
@@ -110,6 +112,7 @@ function validateJoystickSettings(settings: Record<string, unknown>): WidgetSett
     ...validateNumber(settings, "deadzone", { min: 0, max: 1 }),
     ...validateNumber(settings, "publish_rate_hz", { min: 1, max: MAX_JOYSTICK_PUBLISH_RATE_HZ }),
     ...validateBoolean(settings, "show_details"),
+    ...("hide_value" in settings && settings.hide_value !== undefined ? validateBoolean(settings, "hide_value") : []),
     ...validateBoolean(settings, "zero_on_release"),
     ...validateJoystickLabels(settings.labels),
     ...validateJoystickAxisHints(settings.axis_hints),

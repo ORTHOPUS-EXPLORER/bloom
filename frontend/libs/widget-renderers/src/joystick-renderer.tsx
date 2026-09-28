@@ -43,6 +43,7 @@ export function JoystickWidget({
   // actually publishes instead.
   const destination = resolveWidgetDestination(descriptor.widget.kind, joystickSettings);
   const showDetails = getBooleanSetting(joystickSettings, "show_details", false);
+  const hideValue = getBooleanSetting(joystickSettings, "hide_value", false);
   const placement = resolveTitlePlacement(descriptor.widget, showDetails);
   const size = resolveJoystickControlSize(descriptor.widget.layout.width, descriptor.widget.layout.height, {
     placement,
@@ -192,9 +193,11 @@ export function JoystickWidget({
       {placement === "above" && !hidesTitle(descriptor.widget.settings) ? (
         <header className="bloom-widget-head">
           <strong>{descriptor.widget.title}</strong>
-          <output aria-live="off" className="bloom-widget-readout">
-            {readout}
-          </output>
+          {hideValue ? null : (
+            <output aria-live="off" className="bloom-widget-readout">
+              {readout}
+            </output>
+          )}
         </header>
       ) : null}
       {showDetails ? (
@@ -209,9 +212,11 @@ export function JoystickWidget({
         {placement === "overlay" ? (
           <>
             <strong className="bloom-pad-title">{descriptor.widget.title}</strong>
-            <output aria-live="off" className="bloom-pad-readout">
-              {readout}
-            </output>
+            {hideValue ? null : (
+              <output aria-live="off" className="bloom-pad-readout">
+                {readout}
+              </output>
+            )}
           </>
         ) : null}
         {pad}
