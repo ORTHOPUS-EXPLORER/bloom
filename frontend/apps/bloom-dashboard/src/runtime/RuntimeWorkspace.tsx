@@ -600,7 +600,7 @@ export function RuntimeWorkspace({
 
   // STOP stays live over settings and the tour: a joint-target move keeps running behind them.
   const renderStopControl = (region: RegionRect | null) =>
-    runtimeActionClient.engageRuntimeStop ? (
+    stopShown ? (
       <RuntimeStopControl
         region={region}
         onEngage={() => {

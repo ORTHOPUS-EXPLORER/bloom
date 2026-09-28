@@ -153,6 +153,8 @@ function normalizeRuntimePolicy(policy: PartialRuntimeAdapterPolicy | undefined)
       policy?.allowed_teleop_targets,
       DEFAULT_RUNTIME_POLICY.allowed_teleop_targets,
     ),
+    // Only an explicit false hides STOP: anything missing or malformed keeps it.
+    ...(policy?.show_stop === false ? { show_stop: false } : {}),
   };
 }
 

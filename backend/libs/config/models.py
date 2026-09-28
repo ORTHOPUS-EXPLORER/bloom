@@ -193,6 +193,10 @@ class RuntimeAdapterPolicy(BloomModel):
     #: app drives nothing", which is how Bloom Debug and the webcam viewer say so. Whatever is here is
     #: still intersected with the deployment's own allowlist, so this can only ever narrow.
     allowed_teleop_targets: tuple[str, ...] = ("/joystick_cartesian_command",)
+    #: Whether the runtime draws the STOP button on this application's screens. Hiding it removes
+    #: the control only: the backend latch still holds, and a stop engaged elsewhere is still shown
+    #: so the operator can resume.
+    show_stop: bool = True
 
     @field_validator("command_frame_id")
     @classmethod

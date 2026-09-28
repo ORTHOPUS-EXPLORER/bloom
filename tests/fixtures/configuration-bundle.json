@@ -19,7 +19,8 @@
         "allowed_publish_topics": ["/ui/ros_toggle"],
         "allowed_recording_topics": [],
         "allowed_teleop_targets": [],
-        "allowed_service_calls": []
+        "allowed_service_calls": [],
+        "show_stop": true
       },
       "theme": {
         "inspiration": {
