@@ -57,6 +57,10 @@ export function CommandLikeWidget({
   const actionLabel = getStringSetting(descriptor.widget.settings, "action_label", "");
   const command = getStringSetting(descriptor.widget.settings, "command", "");
   const momentary = getBooleanSetting(descriptor.widget.settings, "momentary", false);
+  // Clamped here too: a hand-edited app must not turn a held button into a flood.
+  const repeatHz = momentary
+    ? Math.min(Math.max(getNumberSetting(descriptor.widget.settings, "repeat_hz", 0), 0), MAX_COMMAND_REPEAT_HZ)
+    : 0;
   const showDetails = getBooleanSetting(descriptor.widget.settings, "show_details", false);
   const topic = getStringSetting(descriptor.widget.settings, "topic", "");
   const messageType = getStringSetting(descriptor.widget.settings, "messageType", "");
@@ -135,6 +139,30 @@ export function CommandLikeWidget({
     setIsArmed(false);
     releaseHeldRef.current();
   }, [neutralRevision]);
+
+  // Repeat the pressed payload while held. Every release path clears
+  // isMomentaryPressedRef before it sends the released payload, so a tick that
+  // lands between the release and this effect's cleanup sends nothing after it.
+  // A tick is dropped while an earlier publish is still in flight: queueing it
+  // would only grow a backlog the release then has to wait behind.
+  const publishMomentaryPayloadRef = useRef<(payloadKey: "payload" | "releasedPayload") => void>(() => {});
+  const momentaryPublishChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const momentaryPublishesPendingRef = useRef(0);
+  useEffect(() => {
+    if (!isMomentaryPressed || repeatHz <= 0) {
+      return;
+    }
+    // Rounded up: timers truncate the period, and 16 ms instead of 16.7 is 62 Hz, past the backend's 60/s.
+    const timer = setInterval(
+      () => {
+        if (isMomentaryPressedRef.current && momentaryPublishesPendingRef.current === 0) {
+          publishMomentaryPayloadRef.current("payload");
+        }
+      },
+      Math.ceil(1000 / repeatHz),
+    );
+    return () => clearInterval(timer);
+  }, [isMomentaryPressed, repeatHz]);
 
   const handlePress = () => {
     if (disabled) {
@@ -272,6 +300,7 @@ export function CommandLikeWidget({
       settle(outcome);
     }
   };
+  publishMomentaryPayloadRef.current = publishMomentaryPayload;
 
   const layout = getBooleanSetting(descriptor.widget.settings, "hide_title", false) ? "bare" : "card";
   const showsTitle =

@@ -624,6 +624,20 @@ describe("widget settings contracts", () => {
     });
   });
 
+  it("bounds a command button's hold repeat rate at the backend's per-topic limit", () => {
+    expect(normalizeWidgetSettings("command-button", { command: "x", momentary: true, repeat_hz: 60 }).success).toBe(
+      true,
+    );
+    expect(normalizeWidgetSettings("command-button", { command: "x", repeat_hz: 61 })).toMatchObject({
+      success: false,
+      errors: [{ field: "repeat_hz", message: "repeat_hz must be less than or equal to 60" }],
+    });
+    expect(normalizeWidgetSettings("command-button", { command: "x", repeat_hz: -1 })).toMatchObject({
+      success: false,
+      errors: [{ field: "repeat_hz", message: "repeat_hz must be greater than or equal to 0" }],
+    });
+  });
+
   it("validates plot board series", () => {
     expect(
       normalizeWidgetSettings("plot-board", { series: [{ topic: "/cartesian_command", field_path: "twist.linear.x" }] })
