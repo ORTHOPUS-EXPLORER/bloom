@@ -228,6 +228,19 @@ describe("the teleop stream pump", () => {
     pump.stop();
   });
 
+  it("keeps a widget's unit-clamp opt-out in every heartbeat and the final zero", async () => {
+    // Dropping it on a heartbeat would clamp every other frame of a 3x stream back to 1.
+    composer.contribute("velocity-pad", { linear_x: 3 });
+    const pump = createPump();
+
+    pump.noteDispatched(widgetRequest({ unit_clamp: false }), "sent");
+    await vi.advanceTimersByTimeAsync(160);
+    await pump.suspend();
+
+    expect(sent.length).toBeGreaterThan(1);
+    expect(sent.every((request) => request.unit_clamp === false)).toBe(true);
+  });
+
   it("never starts for a dispatch that already failed", async () => {
     composer.contribute("drive-z", { linear_z: 0.5 });
     const pump = createPump();

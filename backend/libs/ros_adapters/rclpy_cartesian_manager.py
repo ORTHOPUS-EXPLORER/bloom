@@ -87,13 +87,15 @@ class RclpyCartesianManagerGateway:
         message.header.frame_id = command.frame_id or self._command_frame_id
         # Unit scale, like joystick_mapper's axes: the manager sums inputs and
         # normalizes the total, so an oversized Bloom axis would not go faster,
-        # it would drown the other sources in the sum.
-        message.twist.linear.x = _unit(command.linear.x)
-        message.twist.linear.y = _unit(command.linear.y)
-        message.twist.linear.z = _unit(command.linear.z)
-        message.twist.angular.x = _unit(command.angular.x)
-        message.twist.angular.y = _unit(command.angular.y)
-        message.twist.angular.z = _unit(command.angular.z)
+        # it would drown the other sources in the sum. A widget that drives a
+        # topic taking real velocities opts out with value_mapping.unit_clamp.
+        component = _unit if command.unit_clamp else _finite
+        message.twist.linear.x = component(command.linear.x)
+        message.twist.linear.y = component(command.linear.y)
+        message.twist.linear.z = component(command.linear.z)
+        message.twist.angular.x = component(command.angular.x)
+        message.twist.angular.y = component(command.angular.y)
+        message.twist.angular.z = component(command.angular.z)
         return message
 
     @staticmethod
@@ -108,10 +110,13 @@ class RclpyCartesianManagerGateway:
 def _unit(value: float) -> float:
     # min/max carry NaN straight through: max(-1.0, min(1.0, nan)) is 1.0, so a NaN axis would leave
     # this clamp as a full-scale command. The request models reject NaN today; this is the last line.
-    number = float(value)
-    if not math.isfinite(number):
-        return 0.0
+    number = _finite(value)
     return max(-1.0, min(1.0, number))
+
+
+def _finite(value: float) -> float:
+    number = float(value)
+    return number if math.isfinite(number) else 0.0
 
 
 __all__ = ["DEFAULT_COMMAND_FRAME_ID", "RclpyCartesianManagerGateway"]

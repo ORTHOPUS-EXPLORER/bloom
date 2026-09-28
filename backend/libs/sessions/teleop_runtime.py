@@ -161,6 +161,7 @@ def to_teleop_command(message: RuntimeTeleopCommandMessage) -> TeleopCommand:
         mode=message.mode,
         seq=message.seq,
         target=message.target,
+        unit_clamp=message.unit_clamp,
     )
 
 

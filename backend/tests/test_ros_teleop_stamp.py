@@ -33,7 +33,9 @@ class FakeTwistStamped:
         self.twist = FakeTwist()
 
 
-def build_message(monkeypatch, frame_id: str = "", linear_x: float = 0.1, angular_z: float = 0.0) -> FakeTwistStamped:
+def build_message(
+    monkeypatch, frame_id: str = "", linear_x: float = 0.1, angular_z: float = 0.0, unit_clamp: bool = True
+) -> FakeTwistStamped:
     gateway = RclpyCartesianManagerGateway.__new__(RclpyCartesianManagerGateway)
     gateway._command_frame_id = "base_link"
     monkeypatch.setattr(
@@ -48,6 +50,7 @@ def build_message(monkeypatch, frame_id: str = "", linear_x: float = 0.1, angula
         mode=0,
         seq=1,
         target="/joystick_cartesian_command",
+        unit_clamp=unit_clamp,
     )
     return gateway._to_ros_message(command)
 
@@ -91,3 +94,29 @@ def test_axes_are_clamped_to_unit_scale(monkeypatch) -> None:
 
     assert message.twist.linear.x == 1.0
     assert message.twist.angular.z == -1.0
+
+
+def test_an_unclamped_command_keeps_its_scaled_axes(monkeypatch) -> None:
+    """A widget driving a topic that takes real velocities opts out of the unit clamp."""
+    message = build_message(monkeypatch, linear_x=3.0, angular_z=-3.0, unit_clamp=False)
+
+    assert message.twist.linear.x == 3.0
+    assert message.twist.angular.z == -3.0
+
+
+def test_an_unclamped_command_still_zeroes_a_non_finite_axis(monkeypatch) -> None:
+    message = build_message(monkeypatch, linear_x=float("nan"), unit_clamp=False)
+
+    assert message.twist.linear.x == 0.0
+
+
+def test_the_runtime_message_clamps_unless_told_otherwise() -> None:
+    from libs.sessions.models import RuntimeTeleopCommandMessage
+    from libs.sessions.teleop_runtime import to_teleop_command
+
+    clamped = RuntimeTeleopCommandMessage(type="teleop_cmd", linear={"x": 3.0})
+    unclamped = RuntimeTeleopCommandMessage(type="teleop_cmd", linear={"x": 3.0}, unit_clamp=False)
+
+    assert to_teleop_command(clamped).unit_clamp is True
+    assert to_teleop_command(unclamped).unit_clamp is False
+    assert to_teleop_command(unclamped).linear.x == 3.0

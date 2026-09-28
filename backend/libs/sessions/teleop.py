@@ -22,6 +22,8 @@ class TeleopCommand:
     target: str = "/joystick_cartesian_command"
     #: Rotation frame for cartesian_manager; empty uses the configured default.
     frame_id: str = ""
+    #: Clamp each component to ±1 before publishing. See RuntimeTeleopCommandMessage.unit_clamp.
+    unit_clamp: bool = True
 
 
 @dataclass(frozen=True)

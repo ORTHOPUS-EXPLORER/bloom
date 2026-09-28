@@ -74,6 +74,9 @@ class RuntimeTeleopCommandMessage(RuntimeModel):
     linear: RuntimeVector3Message = Field(default_factory=RuntimeVector3Message)
     seq: int = Field(default=0, ge=0)
     target: str = Field(default="/joystick_cartesian_command", min_length=1)
+    #: False publishes the twist as sent, still inside the ±20 bound above, instead of clamping each
+    #: component to ±1. For a target that takes real velocities, not cartesian_manager's summed inputs.
+    unit_clamp: bool = True
 
     @model_validator(mode="before")
     @classmethod

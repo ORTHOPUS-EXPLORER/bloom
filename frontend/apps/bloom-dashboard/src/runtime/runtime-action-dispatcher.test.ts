@@ -363,6 +363,50 @@ describe("runtime action dispatcher", () => {
     });
   });
 
+  it("sends a scaled joystick past ±1 only when its binding opts out of the unit clamp", () => {
+    // The user's binding: a custom velocity topic, axes swapped, scaled by 3.
+    const runtimeBinding = {
+      adapter: "teleop",
+      axis_mapping: {
+        x: { component: "linear_y", scale: -3 },
+        y: { component: "linear_x", scale: 3 },
+      },
+      value_mapping: {
+        mode: 0,
+        target_topic: "/explorer_input_devices/joystick/virtual/velocity/commands",
+        unit_clamp: false,
+      },
+    };
+
+    const unclamped = createTeleopCommandRequest(createTeleopValueIntent({ runtimeBinding, value: { x: 1, y: 0 } }), 1);
+    const clamped = createTeleopCommandRequest(
+      createTeleopValueIntent({
+        runtimeBinding: { ...runtimeBinding, value_mapping: { ...runtimeBinding.value_mapping, unit_clamp: true } },
+        value: { x: 1, y: 0 },
+      }),
+      1,
+    );
+
+    expect(unclamped).toMatchObject({ linear: { x: 0, y: -3, z: 0 }, unit_clamp: false });
+    expect(clamped).not.toHaveProperty("unit_clamp");
+  });
+
+  it("keeps the unit-clamp opt-out when the composer builds the twist", () => {
+    const intent = createTeleopValueIntent({
+      runtimeBinding: {
+        adapter: "teleop",
+        axis_mapping: { x: { component: "linear_x", scale: 3 } },
+        value_mapping: { target_topic: "/velocity", unit_clamp: false },
+      },
+      value: { x: 1, y: 0 },
+    });
+
+    expect(createTeleopCommandRequest(intent, 1, new TeleopTwistComposer())).toMatchObject({
+      linear: { x: 3 },
+      unit_clamp: false,
+    });
+  });
+
   it("carries a bound rotation frame into the teleop command", () => {
     const intent = createTeleopValueIntent({
       modeId: "rotation",
