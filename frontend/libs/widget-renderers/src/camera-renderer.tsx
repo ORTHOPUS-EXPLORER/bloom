@@ -8,7 +8,7 @@ export function CameraWidget({ data, descriptor, language }: WidgetRendererProps
   const source = getStringSetting(descriptor.widget.settings, "source", "placeholder");
   const streamUrl = getStringSetting(descriptor.widget.settings, "streamUrl", "");
   const topic = getStringSetting(descriptor.widget.settings, "topic", "");
-  const fitMode = getStringSetting(descriptor.widget.settings, "fitMode", "contain");
+  const fitMode = readCameraFitMode(getStringSetting(descriptor.widget.settings, "fitMode", "contain"));
   const showHeader = getBooleanSetting(descriptor.widget.settings, "showHeader", true);
   const showStatus = getBooleanSetting(descriptor.widget.settings, "showStatus", true);
   const showWebcamPicker = getBooleanSetting(descriptor.widget.settings, "webcamPicker", true);
@@ -25,7 +25,7 @@ export function CameraWidget({ data, descriptor, language }: WidgetRendererProps
       {source === "ros-topic" ? (
         <>
           <div className="bloom-camera-body">
-            <div className="bloom-camera-frame" data-fit-mode={fitMode === "cover" ? "cover" : "contain"}>
+            <div className="bloom-camera-frame" data-fit-mode={fitMode}>
               {frame?.frameUrl ? (
                 <>
                   <img
@@ -63,7 +63,7 @@ export function CameraWidget({ data, descriptor, language }: WidgetRendererProps
       ) : (
         <>
           <div className="bloom-camera-body">
-            <div className="bloom-camera-frame" data-fit-mode={fitMode === "cover" ? "cover" : "contain"}>
+            <div className="bloom-camera-frame" data-fit-mode={fitMode}>
               {streamUrl ? (
                 <StreamPreview fitMode={fitMode} streamUrl={streamUrl} title={descriptor.widget.title} />
               ) : (
@@ -161,7 +161,7 @@ function WebcamPreview({
   title,
   widgetId,
 }: {
-  fitMode: string;
+  fitMode: CameraFitMode;
   showPicker: boolean;
   showStatus: boolean;
   streamUrl: string;
@@ -254,7 +254,7 @@ function WebcamPreview({
           {streamUrl ? <small>{streamUrl}</small> : null}
         </label>
       ) : null}
-      <div className="bloom-camera-frame" data-fit-mode={fitMode === "cover" ? "cover" : "contain"}>
+      <div className="bloom-camera-frame" data-fit-mode={fitMode}>
         <video aria-label={`${title} webcam preview`} autoPlay muted playsInline ref={videoRef} />
         {status !== "ready" ? <CameraPlaceholder message={getWebcamPlaceholderMessage(status)} /> : null}
       </div>
@@ -402,9 +402,7 @@ function getWebcamPlaceholderMessage(status: "idle" | "requesting" | "ready" | "
 
 function StreamPreview({ fitMode, streamUrl, title }: { fitMode: string; streamUrl: string; title: string }) {
   if (isImageStreamUrl(streamUrl)) {
-    return (
-      <img alt={`${title} stream`} src={streamUrl} style={{ objectFit: fitMode === "cover" ? "cover" : "contain" }} />
-    );
+    return <img alt={`${title} stream`} src={streamUrl} style={{ objectFit: fitMode }} />;
   }
 
   return (

@@ -1042,6 +1042,27 @@ describe("widget renderer registry", () => {
     expect(image).toBeVisible();
     expect(image).toHaveAttribute("src", "http://localhost:8000/camera.jpg");
     expect(screen.getByText("Ready")).toBeVisible();
+    expect(image).toHaveStyle({ objectFit: "cover" });
+  });
+
+  it("stretches the camera image in fill mode and falls back to contain for unknown modes", () => {
+    const widget = cameraStreamScreen.widgets[0];
+    if (!widget) throw new Error("Missing camera widget.");
+    const drawWithFit = (fitMode: string) => {
+      const [descriptor] = renderScreenDescriptors(
+        { ...cameraStreamScreen, widgets: [{ ...widget, settings: { ...widget.settings, fitMode } }] },
+        createDefaultWidgetRegistry(),
+      );
+      if (!descriptor) throw new Error("Missing camera descriptor.");
+      render(<div>{renderWidgetDescriptor(descriptor)}</div>);
+      return screen.getByRole("img", { name: "Garden camera stream" });
+    };
+
+    expect(drawWithFit("fill")).toHaveStyle({ objectFit: "fill" });
+    expect(document.querySelector(".bloom-camera-frame")).toHaveAttribute("data-fit-mode", "fill");
+    cleanup();
+
+    expect(drawWithFit("zoom")).toHaveStyle({ objectFit: "contain" });
   });
 
   it("draws a page stream as a view the operator cannot tap or tab into", () => {

@@ -2363,8 +2363,8 @@ button.bloom-toggle-segment {
 }
 
 .bloom-camera-widget {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   width: 100%;
   height: 100%;
@@ -2418,8 +2418,9 @@ button.bloom-toggle-segment {
 }
 
 .bloom-camera-body {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
   gap: 8px;
   min-height: 0;
 }
@@ -2429,7 +2430,9 @@ button.bloom-toggle-segment {
   grid-row: 2;
   position: relative;
   display: grid;
-  min-height: 120px;
+  flex: 1 1 0;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  min-height: 0;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--bloom-primary) 20%, transparent);
   border-radius: 18px;
@@ -2471,6 +2474,11 @@ button.bloom-toggle-segment {
 .bloom-camera-frame[data-fit-mode="cover"] video,
 .bloom-camera-frame[data-fit-mode="cover"] img {
   object-fit: cover;
+}
+
+.bloom-camera-frame[data-fit-mode="fill"] video,
+.bloom-camera-frame[data-fit-mode="fill"] img {
+  object-fit: fill;
 }
 
 .bloom-camera-placeholder {
