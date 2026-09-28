@@ -736,10 +736,34 @@ describe("widget settings contracts", () => {
         maxMessages: 100,
         messageType: "sensor_msgs/msg/JointState",
         prettyPrint: true,
+        show_age: true,
         show_details: true,
         topic: "/joint_states",
       },
     });
+
+    // Saved apps predate show_age; the key stays optional so they still validate.
+    expect(
+      validateWidgetSettings("topic-echo", {
+        fieldPath: "",
+        maxMessages: 40,
+        messageType: "",
+        prettyPrint: true,
+        show_details: true,
+        topic: "/teleop_cmd",
+      }).success,
+    ).toBe(true);
+    expect(
+      validateWidgetSettings("topic-echo", {
+        fieldPath: "",
+        maxMessages: 40,
+        messageType: "",
+        prettyPrint: true,
+        show_age: "no",
+        show_details: true,
+        topic: "/teleop_cmd",
+      }).success,
+    ).toBe(false);
 
     expect(
       normalizeWidgetSettings("camera", {

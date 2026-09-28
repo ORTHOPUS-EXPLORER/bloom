@@ -68,6 +68,7 @@ function TopicEchoWidget({
 }: WidgetRendererProps & { showDetails: boolean; topic: string }) {
   const word = (text: string) => localizeOperatorText(text, language);
   const prettyPrint = getBooleanSetting(descriptor.widget.settings, "prettyPrint", true);
+  const showAge = getBooleanSetting(descriptor.widget.settings, "show_age", true);
   const messages = data?.type === "topic-echo" ? data.messages : [];
   const [copyStatus, setCopyStatus] = useState<"copied" | "failed" | "idle">("idle");
   // The last message showing at Clear. A full buffer keeps its length, so a count would hide every newer message.
@@ -93,7 +94,7 @@ function TopicEchoWidget({
   // place in the row once it is old enough to mislead; until then the frame has the space.
   const age = latest ? formatAge(localReceivedAt(latest.receivedAt) ?? latest.receivedAt, now) : "nothing sent";
   const stale = isSampleStale(latest?.receivedAt, now);
-  const headerNote = frameId ? (stale ? `${frameId} \u00b7 ${age}` : frameId) : age;
+  const headerNote = !showAge ? frameId : frameId ? (stale ? `${frameId} \u00b7 ${age}` : frameId) : age;
   const handlePauseToggle = () => {
     if (!isPaused) {
       setPausedMessages(visibleMessages);

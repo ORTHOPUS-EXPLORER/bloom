@@ -946,6 +946,42 @@ describe("widget renderer registry", () => {
     expect(document.querySelector(".bloom-topic-echo")?.getAttribute("data-empty")).toBe("true");
   });
 
+  it("hides the last-message age when show_age is off", () => {
+    const widget = topicEchoScreen.widgets[0];
+    if (!widget) throw new Error("Missing topic echo widget.");
+    const screenWithoutAge: ScreenConfig = {
+      ...topicEchoScreen,
+      widgets: [{ ...widget, settings: { ...widget.settings, show_age: false } }],
+    };
+    const descriptor = renderScreenDescriptors(screenWithoutAge, createDefaultWidgetRegistry())[0];
+    if (!descriptor) throw new Error("Missing topic echo descriptor.");
+    const stamped = {
+      receivedAt: "2026-06-02T10:00:00.000Z",
+      topic: "/joint_states",
+      value: { header: { frame_id: "tool0" }, name: ["joint_1"], position: [0.42] },
+    };
+
+    const { rerender } = render(
+      <div>
+        {renderWidgetDescriptor(descriptor, {
+          dataByWidgetId: { "joint-state-echo": { messages: [], type: "topic-echo" } },
+        })}
+      </div>,
+    );
+    expect(screen.queryByText("nothing sent")).toBeNull();
+    expect(document.querySelector(".bloom-widget-readout")).toBeNull();
+
+    rerender(
+      <div>
+        {renderWidgetDescriptor(descriptor, {
+          dataByWidgetId: { "joint-state-echo": { messages: [stamped], type: "topic-echo" } },
+        })}
+      </div>,
+    );
+    // A stale stamped message keeps its frame but no longer gains the age.
+    expect(document.querySelector(".bloom-widget-readout")?.textContent).toBe("tool0");
+  });
+
   it("speaks the echo's own words in the profile's language", () => {
     const detailed = {
       ...topicEchoScreen,
