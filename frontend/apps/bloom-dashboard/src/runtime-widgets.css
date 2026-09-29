@@ -429,6 +429,18 @@
   box-shadow: 0 0 0 8px var(--bloom-focus-ring-contrast);
 }
 
+/* Radix positions the thumb's wrapper along the track only; spanning the cross axis gives the knob a
+   size to fill without container query units. */
+.bloom-slider-widget[data-direction="vertical"] .bloom-axis-slider > span:not(.bloom-axis-track) {
+  right: 0;
+  left: 0;
+}
+
+.bloom-slider-widget[data-direction="horizontal"] .bloom-axis-slider > span:not(.bloom-axis-track) {
+  top: 0;
+  bottom: 0;
+}
+
 /* Vertical: Height. */
 .bloom-slider-widget[data-direction="vertical"] .bloom-axis-title,
 .bloom-slider-widget[data-direction="vertical"] .bloom-axis-readout,
@@ -469,7 +481,9 @@
 }
 
 .bloom-slider-widget[data-direction="vertical"] .bloom-axis-knob {
-  width: 100cqi;
+  /* 100% of the stretched thumb wrapper, not 100cqi: engines without container units (Chrome/WebView
+     < 105, Safari < 16) dropped it, and the knob collapsed to its border, a thin bar. */
+  width: 100%;
   height: 64px;
   border-radius: var(--bloom-radius-control);
 }
@@ -535,7 +549,7 @@
 
 .bloom-slider-widget[data-direction="horizontal"] .bloom-axis-knob {
   width: 72px;
-  height: 100cqb;
+  height: 100%;
   border-radius: 12px;
 }
 
