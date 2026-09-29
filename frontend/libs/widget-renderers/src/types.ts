@@ -222,6 +222,8 @@ export type ScreenRendererOptions = {
   language?: RuntimeLanguage;
   motorPreset?: MotorAccessibilityPreset;
   neutralRevision?: number;
+  /** Returns one widget to rest without the rest of the screen: it advances only for that widget. */
+  neutralRevisionByWidgetId?: Readonly<Record<string, number>>;
   onActionIntent?: WidgetActionIntentHandler;
   /** A widget crashed and shows its fallback: whatever it was holding must be let go of. */
   onWidgetFailed?: (widgetId: string) => void;

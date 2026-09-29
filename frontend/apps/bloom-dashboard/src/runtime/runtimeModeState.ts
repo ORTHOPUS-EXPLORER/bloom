@@ -89,6 +89,8 @@ export function createRuntimeControlStateByWidgetId(
     /** Why a behaviour's control is unavailable, in the operator's language, given its parameter group. */
     behaviourMissing?: (parameters: string) => string;
     commandFrameError?: string | null;
+    /** The latest text on each enable_topic; a missing topic has said nothing yet. */
+    enableTextByTopic?: Readonly<Record<string, string>>;
     frameReasons?: { releaseControls: string; unavailableOnRobot: string };
     runtimeCapabilities?: readonly RuntimeCapability[] | null;
     teleopActive?: boolean;
@@ -191,6 +193,24 @@ export function createRuntimeControlStateByWidgetId(
           ...controlState,
           disabled: true,
           disabledReason: `No ROS node subscribes to ${commandTopic}. Start the robot controller before using this control.`,
+          unavailable: true,
+        };
+      }
+    }
+
+    // Usable only while the robot says so; until its first message the widget waits. A reason already
+    // set above (no subscriber, frame not on this robot) is the more specific one and stays.
+    const gate = resolveEnableGate(widget.settings);
+    if (gate && options.enableTextByTopic !== undefined && !controlState.unavailable) {
+      const reported = options.enableTextByTopic[gate.topic];
+      if (reported === undefined || !enableGateMatches(reported, gate.value)) {
+        controlState = {
+          ...controlState,
+          disabled: true,
+          disabledReason:
+            reported === undefined
+              ? `Waiting for ${gate.topic}.`
+              : `${gate.topic} reports "${reported.trim()}", needs "${gate.value}".`,
           unavailable: true,
         };
       }

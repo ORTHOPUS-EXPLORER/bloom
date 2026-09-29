@@ -71,6 +71,7 @@ type ProductWorkspaceProps = {
   onTopicSample: RuntimeActionClient["addRuntimeTopicSampleListener"];
   onTopicSubscriptionRequest: ReturnType<typeof useRuntimeActionDispatcher>["subscribeTopic"];
   onUploadThemeAsset: (file: File) => Promise<string>;
+  onReleaseTeleopWidgets?: ReturnType<typeof useRuntimeActionDispatcher>["releaseTeleopWidgets"];
   onSuspendTeleop: ReturnType<typeof useRuntimeActionDispatcher>["suspendTeleop"];
   profilePreferences: Record<string, string>;
   profileOverrides: Record<string, RuntimeProfileOverrides>;
@@ -118,6 +119,7 @@ export function ProductWorkspace({
   onTopicSample,
   onTopicSubscriptionRequest,
   onUploadThemeAsset,
+  onReleaseTeleopWidgets,
   onSuspendTeleop,
   profilePreferences,
   profileOverrides,
@@ -244,6 +246,7 @@ export function ProductWorkspace({
       onTeleopContribution={onTeleopContribution}
       onTopicSample={onTopicSample}
       onTopicSubscriptionRequest={onTopicSubscriptionRequest}
+      onReleaseTeleopWidgets={onReleaseTeleopWidgets}
       onSuspendTeleop={onSuspendTeleop}
       onPreviewTheme={onRuntimePreviewTheme}
       preferredProfileId={profilePreferences[runtimePreferenceKey(selection)] ?? ""}

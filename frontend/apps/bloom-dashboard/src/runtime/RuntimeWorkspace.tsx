@@ -107,6 +107,8 @@ type RuntimeWorkspaceProps = {
   onOpenSupervisor: () => void;
   onProfileOverridesChange: (profileId: string, overrides: RuntimeProfileOverrides) => void;
   onSelectionChange: (selection: WorkspaceSelection) => void;
+  /** Lets go of these widgets' teleop only; without it, any unavailable control suspends all teleop. */
+  onReleaseTeleopWidgets?: (widgetIds: readonly string[]) => void;
   onSuspendTeleop: () => void;
   /** A palette Settings is previewing, so the page around the workspace follows the draft; null when it closes. */
   onPreviewTheme?: (presetId: BloomThemePresetId | null) => void;
@@ -138,6 +140,7 @@ export function RuntimeWorkspace({
   onOpenSupervisor,
   onProfileOverridesChange,
   onSelectionChange,
+  onReleaseTeleopWidgets,
   onSuspendTeleop,
   onPreviewTheme,
   onTeleopCommand,
@@ -303,6 +306,7 @@ export function RuntimeWorkspace({
         behaviourAvailability,
         behaviourMissing: strings.kiosk.behaviourMissing,
         commandFrameError,
+        enableTextByTopic,
         frameReasons: {
           releaseControls: strings.kiosk.frameReleaseControls,
           unavailableOnRobot: strings.kiosk.frameUnavailableOnRobot,
@@ -324,6 +328,7 @@ export function RuntimeWorkspace({
       commandFrameError,
       effectiveTeleopTargets,
       allowedCommandFrameIds,
+      enableTextByTopic,
       runtimeCapabilityReport?.capabilities,
       screen,
       strings,
@@ -597,6 +602,12 @@ export function RuntimeWorkspace({
     teleopControlUnavailable,
     tourOpen,
   ]);
+
+  // A new socket has heard nothing yet: gated widgets wait for the robot to say "ready" again.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: each connection starts from silence.
+  useEffect(() => {
+    setEnableTextByTopic({});
+  }, [runtimeLink.connectionCount]);
 
   // STOP stays live over settings and the tour: a joint-target move keeps running behind them.
   const renderStopControl = (region: RegionRect | null) =>

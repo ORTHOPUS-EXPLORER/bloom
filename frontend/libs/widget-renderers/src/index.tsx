@@ -109,10 +109,16 @@ export function renderWidgetDescriptor(
       robotModel={options.robotModel}
       language={options.language}
       motorPreset={options.motorPreset}
-      neutralRevision={options.neutralRevision}
+      neutralRevision={resolveNeutralRevision(options, descriptor.widget.id)}
       onActionIntent={options.onActionIntent}
     />
   );
+}
+
+/** The screen-wide revision plus this widget's own, so either one returns it to rest. */
+function resolveNeutralRevision(options: ScreenRendererOptions, widgetId: string): number | undefined {
+  const own = options.neutralRevisionByWidgetId?.[widgetId];
+  return own ? (options.neutralRevision ?? 0) + own : options.neutralRevision;
 }
 
 export function renderScreenWidgets(

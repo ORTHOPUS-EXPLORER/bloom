@@ -331,6 +331,21 @@ export function useRuntimeActionDispatcher(client: RuntimeActionClient) {
   }, [syncTeleopActive]);
   pumpGaveUp.current = suspendTeleop;
 
+  /**
+   * Let go of some widgets' teleop without suspending the rest: one control greying out (an enable gate,
+   * a missing subscriber) must not end another's hold. The pump keeps streaming whatever is left, or
+   * sends its zero tail when nothing is.
+   */
+  const releaseTeleopWidgets = useCallback(
+    (widgetIds: readonly string[]) => {
+      for (const widgetId of widgetIds) {
+        teleopComposer.current.release(widgetId);
+      }
+      syncTeleopActive();
+    },
+    [syncTeleopActive],
+  );
+
   useEffect(() => {
     const suspendWhenHidden = () => {
       if (document.visibilityState === "hidden") {
@@ -358,6 +373,7 @@ export function useRuntimeActionDispatcher(client: RuntimeActionClient) {
     feedback,
     neutralRevision,
     records,
+    releaseTeleopWidgets,
     subscribeTopic,
     suspendTeleop,
     teleopActive,
