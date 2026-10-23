@@ -1055,6 +1055,42 @@ describe("widget renderer registry", () => {
     expect(document.querySelector(".bloom-topic-echo")?.getAttribute("data-empty")).toBe("true");
   });
 
+  it("returns one widget to rest without touching the others", () => {
+    // A gated joystick greying out must not end a hold on a button beside it.
+    const label = (id: string) => ({
+      id,
+      kind: "label" as const,
+      title: id,
+      layout: { x: 0, y: 0, width: 120, height: 40 },
+      settings: { text: id },
+    });
+    const descriptors = renderScreenDescriptors(
+      { ...topicEchoScreen, widgets: [label("held-button"), label("gated-stick")] },
+      createDefaultWidgetRegistry(),
+    );
+    const registry = createWidgetRendererRegistry([
+      {
+        kind: "label",
+        render: ({ descriptor, neutralRevision }) => (
+          <output data-testid={descriptor.widget.id}>{String(neutralRevision)}</output>
+        ),
+      },
+    ]);
+
+    render(
+      <div>
+        {renderScreenWidgets(descriptors, {
+          neutralRevision: 3,
+          neutralRevisionByWidgetId: { "gated-stick": 2 },
+          registry,
+        })}
+      </div>,
+    );
+
+    expect(screen.getByTestId("held-button")).toHaveTextContent("3");
+    expect(screen.getByTestId("gated-stick")).toHaveTextContent("5");
+  });
+
   it("hides the last-message age when show_age is off", () => {
     const widget = topicEchoScreen.widgets[0];
     if (!widget) throw new Error("Missing topic echo widget.");

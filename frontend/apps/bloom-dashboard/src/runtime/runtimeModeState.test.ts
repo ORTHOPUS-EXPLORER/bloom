@@ -523,3 +523,63 @@ describe("a joystick on a topic the server refuses", () => {
     expect(states("/tablet_cmd", ["*"], ["*"]).stick).toBeUndefined();
   });
 });
+
+describe("runtime enable-topic gating", () => {
+  const gatedScreen = {
+    id: "gated",
+    title: "Gated",
+    canvas: { preset_id: "native-1280x720", runtime_mode: "fit" },
+    widgets: [
+      {
+        id: "default-gate",
+        kind: "label",
+        title: "Default",
+        layout: { x: 0, y: 0, width: 180, height: 60 },
+        settings: { text: "Go", enable_topic: "/robot_status" },
+      },
+      {
+        id: "custom-gate",
+        kind: "label",
+        title: "Custom",
+        layout: { x: 0, y: 70, width: 180, height: 60 },
+        settings: { text: "Go", enable_topic: "/robot_status", enable_value: "idle" },
+      },
+      {
+        id: "ungated",
+        kind: "label",
+        title: "Ungated",
+        layout: { x: 0, y: 140, width: 180, height: 60 },
+        settings: { text: "Always" },
+      },
+    ],
+  } as ScreenConfig;
+  const stateFor = (enableTextByTopic: Record<string, string>) =>
+    createRuntimeControlStateByWidgetId(gatedScreen, { enableTextByTopic });
+
+  it("waits for the enable topic's first message", () => {
+    expect(stateFor({})["default-gate"]).toEqual({
+      disabled: true,
+      disabledReason: "Waiting for /robot_status.",
+      unavailable: true,
+    });
+    expect(stateFor({}).ungated).toBeUndefined();
+  });
+
+  it("stays unavailable while the topic reports anything but the expected value", () => {
+    expect(stateFor({ "/robot_status": "busy" })["default-gate"]).toEqual({
+      disabled: true,
+      disabledReason: '/robot_status reports "busy", needs "ready".',
+      unavailable: true,
+    });
+    expect(stateFor({ "/robot_status": "ready" })["custom-gate"]).toMatchObject({ unavailable: true });
+  });
+
+  it("frees the widget once the topic reports the expected value", () => {
+    expect(stateFor({ "/robot_status": "ready\n" })["default-gate"]).toBeUndefined();
+    expect(stateFor({ "/robot_status": "idle" })["custom-gate"]).toBeUndefined();
+  });
+
+  it("gates nothing when the caller tracks no enable topics (previews, the builder)", () => {
+    expect(createRuntimeControlStateByWidgetId(gatedScreen)).toEqual({});
+  });
+});

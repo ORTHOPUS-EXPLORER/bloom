@@ -1,6 +1,7 @@
 import type { WidgetKind } from "@bloom/api-client";
 import { cameraContract, normalizeCameraCompatibility } from "./settings/camera";
 import { commandButtonContract } from "./settings/command-button";
+import { validateEnableGate } from "./settings/enable-gate";
 import { confidenceBarsContract } from "./settings/confidence-bars";
 import { eventLogContract } from "./settings/event-log";
 import { gaugeContract } from "./settings/gauge";
@@ -19,11 +20,17 @@ import { toggleContract } from "./settings/toggle";
 import { topicEchoContract } from "./settings/topic-echo";
 import { topicPlotContract } from "./settings/topic-plot";
 import { unknownContract } from "./settings/unknown";
-import { cloneSettings, type WidgetSettingsContract, type WidgetSettingsValidationResult } from "./settings/validation";
+import {
+  cloneSettings,
+  fail,
+  type WidgetSettingsContract,
+  type WidgetSettingsValidationResult,
+} from "./settings/validation";
 import { valueStripContract } from "./settings/value-strip";
 
 export * from "./settings/camera";
 export * from "./settings/command-button";
+export * from "./settings/enable-gate";
 export * from "./settings/confidence-bars";
 export * from "./settings/event-log";
 export * from "./settings/gauge";
@@ -82,67 +89,9 @@ export function validateWidgetSettings(
   kind: WidgetKind,
   settings: Record<string, unknown>,
 ): WidgetSettingsValidationResult {
+  const gateErrors = validateEnableGate(settings);
+  if (gateErrors.length > 0) return fail(gateErrors);
   return getWidgetSettingsContract(kind).validate(settings);
-}
-
-function validateEnableGate(settings: Record<string, unknown>): WidgetSettingsValidationError[] {
-  const errors: WidgetSettingsValidationError[] = [];
-  const topic = settings.enable_topic;
-  if (topic !== undefined) {
-    if (typeof topic !== "string") {
-      errors.push({ field: "enable_topic", message: "enable_topic must be a string" });
-    } else if (topic.trim() !== "" && !topic.trim().startsWith("/")) {
-      errors.push({ field: "enable_topic", message: "enable_topic must start with '/'" });
-    }
-  }
-  if (settings.enable_value !== undefined && typeof settings.enable_value !== "string") {
-    errors.push({ field: "enable_value", message: "enable_value must be a string" });
-  }
-  return errors;
-}
-
-/**
- * The topic whose latest value decides whether the widget is usable, and the value it must report.
- * Null when the widget names no topic: it is never gated.
- */
-export function resolveEnableGate(settings: Record<string, unknown>): { topic: string; value: string } | null {
-  const topic = typeof settings.enable_topic === "string" ? settings.enable_topic.trim() : "";
-  if (!topic.startsWith("/")) {
-    return null;
-  }
-  const value = typeof settings.enable_value === "string" ? settings.enable_value.trim() : "";
-  return { topic, value: value || DEFAULT_ENABLE_VALUE };
-}
-
-/**
- * The text a gate compares. std_msgs carry their value in `data` (String, Bool, Int*, UInt*, Float*), and
- * a display widget subscribed with field path `data` hands over the bare value: both read the same.
- */
-export function readEnableGateText(value: unknown): string {
-  const unwrapped = typeof value === "object" && value !== null && "data" in value ? value.data : value;
-  if (typeof unwrapped === "string") {
-    return unwrapped;
-  }
-  if (typeof unwrapped === "number" || typeof unwrapped === "boolean") {
-    return String(unwrapped);
-  }
-  return JSON.stringify(unwrapped) ?? "";
-}
-
-/**
- * Whether a reported value opens the gate. Numbers compare as numbers, so an authored "1.0" matches the
- * `1` a Float64 1.0 arrives as; booleans ignore case, so "True" matches a Bool; anything else is exact.
- */
-export function enableGateMatches(reported: string, expected: string): boolean {
-  const actual = reported.trim();
-  const wanted = expected.trim();
-  if (actual !== "" && wanted !== "" && Number.isFinite(Number(actual)) && Number.isFinite(Number(wanted))) {
-    return Number(actual) === Number(wanted);
-  }
-  if (/^(true|false)$/i.test(actual) && /^(true|false)$/i.test(wanted)) {
-    return actual.toLowerCase() === wanted.toLowerCase();
-  }
-  return actual === wanted;
 }
 
 export function normalizeWidgetSettings(

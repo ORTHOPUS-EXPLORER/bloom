@@ -746,6 +746,35 @@ describe("widget settings contracts", () => {
       },
     });
 
+    // An enable gate names an absolute topic; the value it waits for defaults to "ready".
+    const echoBase = {
+      fieldPath: "",
+      maxMessages: 40,
+      messageType: "",
+      prettyPrint: true,
+      show_details: true,
+      topic: "/teleop_cmd",
+    };
+    expect(validateWidgetSettings("topic-echo", { ...echoBase, enable_topic: "robot_status" }).success).toBe(false);
+    expect(validateWidgetSettings("topic-echo", { ...echoBase, enable_topic: "/robot_status" }).success).toBe(true);
+    expect(validateWidgetSettings("topic-echo", { ...echoBase, enable_value: 1 }).success).toBe(false);
+    expect(resolveEnableGate({ enable_topic: "/robot_status" })).toEqual({ topic: "/robot_status", value: "ready" });
+    expect(resolveEnableGate({ enable_topic: " ", enable_value: "go" })).toBeNull();
+    expect(readEnableGateText({ data: "ready" })).toBe("ready");
+    // Every std_msgs scalar reads the same whole or unwrapped by a display widget's field path.
+    expect(readEnableGateText({ data: 1.0 })).toBe("1");
+    expect(readEnableGateText(2.5)).toBe("2.5");
+    expect(readEnableGateText({ data: true })).toBe("true");
+    expect(readEnableGateText({ data: -3 })).toBe("-3");
+    expect(enableGateMatches("1", "1.0")).toBe(true);
+    expect(enableGateMatches("0.5", "0.50")).toBe(true);
+    expect(enableGateMatches("2", "1")).toBe(false);
+    expect(enableGateMatches("true", "True")).toBe(true);
+    expect(enableGateMatches("false", "true")).toBe(false);
+    expect(enableGateMatches("ready\n", "ready")).toBe(true);
+    expect(enableGateMatches("Ready", "ready")).toBe(false);
+    expect(enableGateMatches("", "0")).toBe(false);
+
     // Saved apps predate show_age; the key stays optional so they still validate.
     expect(
       validateWidgetSettings("topic-echo", {
@@ -981,7 +1010,12 @@ describe("widget settings contracts", () => {
     // make it send or navigate anything.
     const blank = [...createDefaultWidgetRegistry().values()]
       .filter((definition) => definition.availability.editor && definition.kind !== "unknown")
-      .filter((definition) => getWidgetSettingsContract(definition.kind).fields.length === 0)
+      // Every card can carry the common settings (title, enable gate); they alone leave nothing to fill in.
+      .filter(
+        (definition) =>
+          getWidgetSettingsContract(definition.kind).fields.filter((field) => !COMMON_SETTING_KEYS.includes(field.key))
+            .length === 0,
+      )
       .map((definition) => definition.kind);
 
     expect(blank).toEqual([]);

@@ -8,6 +8,7 @@ import {
   readConfidences,
   readNumber,
   readOptionalString,
+  resolveEnableGate,
   resolveSubscriptionTopic,
   type SavedHandPose,
   sameConfidences,
@@ -42,7 +43,19 @@ export function createRuntimeTopicSubscriptionRequests(screen: ScreenConfig): Ru
       widget_id: widget.id,
     })),
   );
-  return [...widgetRequests, ...viewRequests, ...createSeriesSubscriptionRequests(screen, widgetRequests)];
+  // Last, so a widget that displays the same topic keeps its own field path: one subscription per topic.
+  const enableRequests = screen.widgets.flatMap((widget): RuntimeTopicSubscriptionRequest[] => {
+    const gate = resolveEnableGate(widget.settings);
+    return gate
+      ? [{ type: "subscribe_topic", topic: gate.topic, message_type: "", field_path: "", widget_id: widget.id }]
+      : [];
+  });
+  return [
+    ...widgetRequests,
+    ...viewRequests,
+    ...createSeriesSubscriptionRequests(screen, widgetRequests),
+    ...enableRequests,
+  ];
 }
 
 /** What a 3D robot view reads beside its joint states, each kept under its own field of the snapshot. */

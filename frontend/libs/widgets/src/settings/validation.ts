@@ -1,5 +1,6 @@
 import type { WidgetKind } from "@bloom/api-client";
 import { isRecord } from "../values";
+import { ENABLE_GATE_FIELDS } from "./enable-gate";
 
 export type WidgetSettingFieldType = "boolean" | "json" | "number" | "select" | "text";
 
@@ -41,7 +42,8 @@ export function createContract<TSettings extends Record<string, unknown>>(
 ): WidgetSettingsContract<TSettings> {
   return {
     kind,
-    fields,
+    // Any card can be gated on a topic; see enable-gate.ts.
+    fields: [...fields, ...ENABLE_GATE_FIELDS],
     defaultSettings,
     validate,
   };

@@ -19,6 +19,8 @@ import {
   behaviourAvailability as behaviourAvailabilityOf,
   MANAGER_NODE,
   type ManagerBehaviour,
+  readEnableGateText,
+  resolveEnableGate,
   withRobotGripper,
   withRobotGripperScreen,
 } from "@bloom/widgets";
@@ -298,6 +300,8 @@ export function RuntimeWorkspace({
       : poseTargetActive
         ? "pose_target"
         : null;
+  // The latest text on each enable_topic; a topic absent here has said nothing on this connection yet.
+  const [enableTextByTopic, setEnableTextByTopic] = useState<Readonly<Record<string, string>>>({});
   const baseControlStateByWidgetId = useMemo(
     () =>
       createRuntimeControlStateByWidgetId(screen, {
@@ -352,6 +356,22 @@ export function RuntimeWorkspace({
     runtimeLink,
     screen,
   });
+  useEffect(() => {
+    if (!onTopicSample) {
+      return;
+    }
+    const enableTopics = new Set(screen.widgets.flatMap((widget) => resolveEnableGate(widget.settings)?.topic ?? []));
+    if (enableTopics.size === 0) {
+      return;
+    }
+    return onTopicSample((sample) => {
+      const topic = sample.payload.topic;
+      if (enableTopics.has(topic)) {
+        const text = readEnableGateText(sample.payload.value);
+        setEnableTextByTopic((current) => (current[topic] === text ? current : { ...current, [topic]: text }));
+      }
+    });
+  }, [onTopicSample, screen]);
   const runtimeStop = useRuntimeStop(runtimeActionClient);
   const runtimeControl = useRuntimeControl(runtimeActionClient, onSuspendTeleop);
   const ownsRuntimeControl = !runtimeControl.supported || runtimeControl.state?.is_owner === true;
@@ -578,9 +598,31 @@ export function RuntimeWorkspace({
 
   // An unavailable control swallows its own pointer release, so a held stick
   // would stay composed and resume streaming once the controller came back.
-  const teleopControlUnavailable = screen.widgets.some(
-    (widget) => usesTeleopAdapter(widget) && controlStateByWidgetId[widget.id]?.unavailable === true,
-  );
+  // Only that control lets go: one widget greying out (an enable gate, a
+  // missing subscriber) must not end a hold on a control that is still usable.
+  const unavailableTeleopWidgetKey = screen.widgets
+    .filter((widget) => usesTeleopAdapter(widget) && controlStateByWidgetId[widget.id]?.unavailable === true)
+    .map((widget) => widget.id)
+    .join("\n");
+  const teleopControlUnavailable = !onReleaseTeleopWidgets && unavailableTeleopWidgetKey !== "";
+  const [neutralRevisionByWidgetId, setNeutralRevisionByWidgetId] = useState<Readonly<Record<string, number>>>({});
+  const releasedTeleopWidgetIdsRef = useRef<ReadonlySet<string>>(new Set());
+  useEffect(() => {
+    const unavailableIds = new Set(unavailableTeleopWidgetKey ? unavailableTeleopWidgetKey.split("\n") : []);
+    const newlyUnavailable = [...unavailableIds].filter((id) => !releasedTeleopWidgetIdsRef.current.has(id));
+    releasedTeleopWidgetIdsRef.current = unavailableIds;
+    if (newlyUnavailable.length === 0 || !onReleaseTeleopWidgets) {
+      return;
+    }
+    onReleaseTeleopWidgets(newlyUnavailable);
+    setNeutralRevisionByWidgetId((current) => {
+      const next = { ...current };
+      for (const id of newlyUnavailable) {
+        next[id] = (next[id] ?? 0) + 1;
+      }
+      return next;
+    });
+  }, [onReleaseTeleopWidgets, unavailableTeleopWidgetKey]);
   // Whatever takes the operator's hands off the controls also drops the composed twist: a sheet
   // over the canvas, STOP, a frame the robot lacks, losing control (the release zeros that arrive
   // meanwhile are refused by the gate, so a reclaim would stream a stick already let go of), or a
@@ -866,6 +908,7 @@ export function RuntimeWorkspace({
                 language: runtimeProfile.language,
                 motorPreset: runtimeProfile.motorAccessibilityPreset,
                 neutralRevision: teleopNeutralRevision,
+                neutralRevisionByWidgetId,
                 onActionIntent: stableActionIntent,
                 // A crashed teleop control shows "sending nothing": the suspend makes that true.
                 onWidgetFailed: (widgetId) => {

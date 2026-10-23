@@ -370,6 +370,7 @@ export function App({
                 onTopicSample={runtimeActionClient.addRuntimeTopicSampleListener}
                 onTopicSubscriptionRequest={runtimeActions.subscribeTopic}
                 onUploadThemeAsset={applicationActions.uploadThemeAsset}
+                onReleaseTeleopWidgets={runtimeActions.releaseTeleopWidgets}
                 onSuspendTeleop={runtimeActions.suspendTeleop}
                 profilePreferences={runtimeUserPreferences.profilePreferences}
                 profileOverrides={runtimeUserPreferences.profileOverrides}
