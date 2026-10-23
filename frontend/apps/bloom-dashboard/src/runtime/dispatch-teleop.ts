@@ -228,6 +228,9 @@ export function createTeleopCommandRequest(
    */
   const widgetFrameId = readOptionalString(valueMapping.frame_id) ?? "";
   const sessionFrameId = commandFrameId.trim();
+  // Only a target that takes real velocities should opt out: cartesian_manager sums its inputs,
+  // so an oversized axis there would drown the others instead of going faster.
+  const unclamped = valueMapping.unit_clamp === false ? { unit_clamp: false as const } : {};
 
   const contribution = teleopContributionFromIntent(intent, runtimeBinding);
   if (!contribution) {
@@ -247,6 +250,7 @@ export function createTeleopCommandRequest(
       mode,
       seq: sequence,
       target,
+      ...unclamped,
     };
   }
 
@@ -264,6 +268,7 @@ export function createTeleopCommandRequest(
     mode: composeTeleopMode(twist, mode, target),
     seq: sequence,
     target,
+    ...unclamped,
   };
 }
 

@@ -1,7 +1,7 @@
 import type { RuntimeTeleopCommandRequest } from "./runtime-action-dispatcher";
 import { composeTeleopMode, isZeroTwist, type TeleopTwistComposer } from "./teleop-composition";
 
-type StreamTarget = Pick<RuntimeTeleopCommandRequest, "frame_id" | "mode" | "target">;
+type StreamTarget = Pick<RuntimeTeleopCommandRequest, "frame_id" | "mode" | "target" | "unit_clamp">;
 
 type Stream = StreamTarget & { lastSentAt: number; zeroFramesLeft: number };
 
@@ -67,7 +67,12 @@ export class TeleopStreamPump {
       return;
     }
 
-    const target: StreamTarget = { frame_id: request.frame_id, mode: request.mode, target: request.target };
+    const target: StreamTarget = {
+      frame_id: request.frame_id,
+      mode: request.mode,
+      target: request.target,
+      ...(request.unit_clamp === false ? { unit_clamp: false as const } : {}),
+    };
     this.widgetTarget = target;
     this.streams.set(request.target, { ...target, lastSentAt: Date.now(), zeroFramesLeft: this.zeroTailFrames });
     if (isZeroTwist(request)) {
@@ -142,6 +147,7 @@ export class TeleopStreamPump {
           mode: target.mode,
           seq: this.nextSequence(),
           target: target.target,
+          ...(target.unit_clamp === false ? { unit_clamp: false as const } : {}),
         });
       }),
     ).then(() => undefined);
@@ -205,6 +211,8 @@ export class TeleopStreamPump {
       mode: composeTeleopMode(twist, stream.mode, stream.target),
       seq: this.nextSequence(),
       target: stream.target,
+      // A keep-alive that dropped the flag would clamp every other frame of an unclamped stream.
+      ...(stream.unit_clamp === false ? { unit_clamp: false as const } : {}),
     }).then(
       () => {
         this.failures = 0;

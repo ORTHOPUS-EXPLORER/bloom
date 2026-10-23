@@ -16,6 +16,12 @@ export type RuntimeTeleopCommandRequest = {
   seq: number;
   target: string;
   type: "teleop_cmd";
+  /**
+   * `false` publishes the scaled twist as-is instead of clamping each
+   * component to [-1, 1]. Set from `value_mapping.unit_clamp`; omitted means
+   * clamped, which is what cartesian_manager's summed inputs need.
+   */
+  unit_clamp?: false;
 };
 
 export type RuntimeTeleopCommandResponse = {
