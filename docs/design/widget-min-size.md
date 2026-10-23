@@ -11,7 +11,7 @@ grouped row below, which already accounts for it.
 
 | kind | details off | details on | why | in the tree before this change |
 | --- | --- | --- | --- | --- |
-| `joystick` | 280×332 | 320×400 | 240 pad + 64 chrome + 28 readout; detail chips need 320 wide | ok |
+| `joystick` | 280×280 | 320×400 | square: the title and readout overlay the pad, which keeps a 276 edge; detail chips need 320 wide and force the title row | ok |
 | `slider` vertical | 104×284 | 130×312 | 220 track is the shortest that still resolves 0.01 steps by thumb | `drive-rz` 130×260 |
 | `slider` horizontal | 260×104 | 300×132 | title + unit + `min → max` share one header line | speed limits 210×130 |
 | `toggle` | 200×120 | 250×144 | verb label needs 200; the topic line needs 250 | `drive-gripper` 130×130 |
@@ -61,7 +61,7 @@ seed validator all read one source:
 
 ```ts
 export const WIDGET_MIN_SIZE = {
-  joystick:            { off: [280, 332], on: [320, 400] },
+  joystick:            { off: [280, 280], on: [320, 400] },
   'slider:vertical':   { off: [104, 284], on: [130, 312] },
   'slider:horizontal': { off: [260, 104], on: [300, 132] },
   toggle:              { off: [200, 120], on: [250, 144] },

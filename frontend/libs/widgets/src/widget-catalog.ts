@@ -118,7 +118,7 @@ export const DEFAULT_WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
     description: "Captures planar operator input for teleoperation-like controls.",
     defaultTitle: "Translation",
     defaultSettings: translationPadSettings(),
-    defaultLayout: { width: 280, height: 332, minWidth: 280, minHeight: 332 },
+    defaultLayout: { width: 280, height: 332, minWidth: 280, minHeight: 280 },
     runtimeRequirements: ["teleop-adapter"],
     maturity: "ready",
     availability: { editor: true, runtime: true },

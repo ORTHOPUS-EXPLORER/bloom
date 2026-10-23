@@ -11,7 +11,8 @@ export type WidgetMinSize = readonly [width: number, height: number];
 const HIDDEN_TITLE_PX = 32;
 
 export const WIDGET_MIN_SIZE: Readonly<Record<string, { off: WidgetMinSize; on: WidgetMinSize }>> = {
-  joystick: { off: [280, 332], on: [320, 400] },
+  // Square: below 32 px of spare height the title overlays the pad, which keeps its 276 px edge.
+  joystick: { off: [280, 280], on: [320, 400] },
   "slider:vertical": { off: [104, 284], on: [130, 312] },
   "slider:horizontal": { off: [260, 104], on: [300, 132] },
   toggle: { off: [200, 120], on: [250, 144] },
