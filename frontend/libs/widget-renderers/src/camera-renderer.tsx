@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { type RendererStrings, rendererStrings } from "./renderer-strings";
 import type { WidgetRendererProps } from "./types";
 
+/** contain letterboxes, cover crops, fill stretches to the frame's exact shape. */
+type CameraFitMode = "contain" | "cover" | "fill";
+
+function readCameraFitMode(value: string): CameraFitMode {
+  return value === "cover" || value === "fill" ? value : "contain";
+}
+
 export function CameraWidget({ data, descriptor, language }: WidgetRendererProps) {
   const text = rendererStrings(language);
   const source = getStringSetting(descriptor.widget.settings, "source", "placeholder");
@@ -32,7 +39,7 @@ export function CameraWidget({ data, descriptor, language }: WidgetRendererProps
                     alt={descriptor.widget.title}
                     className="bloom-camera-image"
                     src={frame.frameUrl}
-                    style={{ objectFit: fitMode === "cover" ? "cover" : "contain" }}
+                    style={{ objectFit: fitMode }}
                   />
                   <CameraStaleBadge
                     detail={describeClosedStream(frame, text)}
@@ -400,7 +407,7 @@ function getWebcamPlaceholderMessage(status: "idle" | "requesting" | "ready" | "
   return "Waiting for webcam permission...";
 }
 
-function StreamPreview({ fitMode, streamUrl, title }: { fitMode: string; streamUrl: string; title: string }) {
+function StreamPreview({ fitMode, streamUrl, title }: { fitMode: CameraFitMode; streamUrl: string; title: string }) {
   if (isImageStreamUrl(streamUrl)) {
     return <img alt={`${title} stream`} src={streamUrl} style={{ objectFit: fitMode }} />;
   }

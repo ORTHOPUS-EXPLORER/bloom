@@ -9,7 +9,7 @@ import {
 } from "./validation";
 
 export type CameraSettings = {
-  fitMode: "contain" | "cover";
+  fitMode: "contain" | "cover" | "fill";
   showHeader: boolean;
   showStatus: boolean;
   source: "placeholder" | "ros-topic" | "stream-url" | "webcam";
@@ -42,7 +42,7 @@ export const cameraContract = createContract(
       required: true,
       options: ["placeholder", "ros-topic", "stream-url", "webcam"],
     },
-    { key: "fitMode", label: "Fit mode", type: "select", required: true, options: ["contain", "cover"] },
+    { key: "fitMode", label: "Fit mode", type: "select", required: true, options: ["contain", "cover", "fill"] },
     { key: "showHeader", label: "Show header", type: "boolean", required: true },
     { key: "showStatus", label: "Show status", type: "boolean", required: true },
     { key: "webcamPicker", label: "Show webcam picker", type: "boolean", required: true },
@@ -56,7 +56,7 @@ function validateCameraSettings(settings: Record<string, unknown>): WidgetSettin
     ...validateString(settings, "streamUrl", { allowEmpty: true }),
     ...validateString(settings, "topic", { allowEmpty: true }),
     ...validateOneOf(settings, "source", ["placeholder", "ros-topic", "stream-url", "webcam"]),
-    ...validateOneOf(settings, "fitMode", ["contain", "cover"]),
+    ...validateOneOf(settings, "fitMode", ["contain", "cover", "fill"]),
     ...validateBoolean(settings, "showHeader"),
     ...validateBoolean(settings, "showStatus"),
     ...validateBoolean(settings, "webcamPicker"),
