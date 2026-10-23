@@ -1,8 +1,8 @@
 import type { WidgetKind } from "@bloom/api-client";
 import { cameraContract, normalizeCameraCompatibility } from "./settings/camera";
 import { commandButtonContract } from "./settings/command-button";
-import { validateEnableGate } from "./settings/enable-gate";
 import { confidenceBarsContract } from "./settings/confidence-bars";
+import { validateEnableGate } from "./settings/enable-gate";
 import { eventLogContract } from "./settings/event-log";
 import { gaugeContract } from "./settings/gauge";
 import { gesturePadContract } from "./settings/gesture-pad";
@@ -30,8 +30,8 @@ import { valueStripContract } from "./settings/value-strip";
 
 export * from "./settings/camera";
 export * from "./settings/command-button";
-export * from "./settings/enable-gate";
 export * from "./settings/confidence-bars";
+export * from "./settings/enable-gate";
 export * from "./settings/event-log";
 export * from "./settings/gauge";
 export * from "./settings/gesture-pad";
