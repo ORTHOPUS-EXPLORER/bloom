@@ -16,6 +16,7 @@ function Harness() {
         commandFrameUnavailable={false}
         onCommandFrameChange={() => undefined}
         onPolicyListChange={(field, value) => setPolicy((current) => ({ ...current, [field]: parseLines(value) }))}
+        onShowStopChange={(showStop) => setPolicy((current) => ({ ...current, show_stop: showStop }))}
         onSyncFromPresets={() => setPolicy((current) => ({ ...current, allowed_service_calls: ["/synced"] }))}
         policy={policy}
         runtimeCapabilityReport={null}

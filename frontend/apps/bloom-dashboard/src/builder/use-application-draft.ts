@@ -204,6 +204,13 @@ export function useApplicationDraft({
   const updateRuntimePolicy = (patch: Partial<RuntimeAdapterPolicy>) =>
     edit((current) => ({ ...current, runtime_policy: { ...current.runtime_policy, ...patch } }));
 
+  // Omitted rather than true, so an app that never hid STOP saves unchanged.
+  const setShowStop = (showStop: boolean) =>
+    edit((current) => {
+      const { show_stop: _previous, ...runtimePolicy } = current.runtime_policy;
+      return { ...current, runtime_policy: showStop ? runtimePolicy : { ...runtimePolicy, show_stop: false } };
+    });
+
   const updateRuntimePolicyList = (field: keyof RuntimeAdapterPolicy, value: string) =>
     updateRuntimePolicy({ [field]: parseLines(value) });
 
@@ -312,6 +319,7 @@ export function useApplicationDraft({
     setNewPreset: (patch: Partial<RuntimeActionPreset>) => setNewPreset((current) => ({ ...current, ...patch })),
     setNewScreenDevice,
     setNewScreenName,
+    setShowStop,
     syncRuntimePolicyFromActionPresets,
     themeInspirationError,
     unassignedScreens,

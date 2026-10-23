@@ -7,6 +7,7 @@ type BuilderAdapterGuardrailsPanelProps = {
   commandFrameUnavailable: boolean;
   onCommandFrameChange: (frameId: string) => void;
   onPolicyListChange: (field: keyof RuntimeAdapterPolicy, value: string) => void;
+  onShowStopChange: (showStop: boolean) => void;
   onSyncFromPresets: () => void;
   policy: RuntimeAdapterPolicy;
   runtimeCapabilityReport: RuntimeCapabilityReport | null;
@@ -46,6 +47,7 @@ export function BuilderAdapterGuardrailsPanel({
   commandFrameUnavailable,
   onCommandFrameChange,
   onPolicyListChange,
+  onShowStopChange,
   onSyncFromPresets,
   policy,
   runtimeCapabilityReport,
@@ -101,6 +103,20 @@ export function BuilderAdapterGuardrailsPanel({
       {commandFrameUnavailable ? (
         <p className="builder-inline-error" id="builder-command-frame-error" role="alert">
           This frame is not available on the connected robot. Choose a supported frame before saving.
+        </p>
+      ) : null}
+      <label className="builder-settings-field builder-settings-checkbox">
+        <input
+          checked={policy.show_stop !== false}
+          onChange={(event) => onShowStopChange(event.target.checked)}
+          type="checkbox"
+        />
+        <span>Show the STOP button</span>
+      </label>
+      {policy.show_stop === false ? (
+        <p className="builder-inspector-copy">
+          Operators of this app get no STOP on screen. A stop engaged from another tablet still appears, so it can be
+          resumed.
         </p>
       ) : null}
       <button className="builder-secondary-action" onClick={onSyncFromPresets} type="button">

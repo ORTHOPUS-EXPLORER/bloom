@@ -156,6 +156,7 @@ export function BuilderAppConfig({
             commandFrameUnavailable={commandFrameUnavailable}
             onCommandFrameChange={(frameId) => editor.updateRuntimePolicy({ command_frame_id: frameId })}
             onPolicyListChange={editor.updateRuntimePolicyList}
+            onShowStopChange={editor.setShowStop}
             onSyncFromPresets={editor.syncRuntimePolicyFromActionPresets}
             policy={draft.runtime_policy}
             runtimeCapabilityReport={runtimeCapabilityReport}

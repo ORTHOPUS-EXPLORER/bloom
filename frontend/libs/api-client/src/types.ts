@@ -164,6 +164,8 @@ export type RuntimeAdapterPolicy = {
   /** ROS services this app may call; the deployment allowlists their types. */
   allowed_service_calls: string[];
   allowed_teleop_targets: string[];
+  /** `false` hides the runtime STOP button; a stop engaged elsewhere still shows so it can be resumed. */
+  show_stop?: boolean;
 };
 
 export type RuntimeActionPreset = {

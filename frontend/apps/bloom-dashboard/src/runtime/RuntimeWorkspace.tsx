@@ -183,7 +183,8 @@ export function RuntimeWorkspace({
   const debugRegion = useMemo(() => findRuntimeRegion(screen, "debug-status"), [screen]);
   const debugRect = useReservedRegionRect(debugRegion, artboardFrameRef, runtimeControlsRef, artboardScale);
   // The sheet keeps clear of STOP, which stays live above the scrim; the corner STOP is 176 px plus its margin.
-  const stopFallbackInset = runtimeActionClient.engageRuntimeStop ? 202 : 0;
+  const stopFallbackInset =
+    runtimeActionClient.engageRuntimeStop && application.runtime_policy.show_stop !== false ? 202 : 0;
   const stopSheetInset = useStopSheetInset(stopRect, runtimeControlsRef, stopFallbackInset);
   const scaledArtboardSize = useMemo(
     () => ({
@@ -389,6 +390,9 @@ export function RuntimeWorkspace({
   });
   const runtimeControlBlocked = runtimeControl.supported && !ownsRuntimeControl;
   const stopped = runtimeStop.state?.stopped === true || runtimeStop.stopRequested;
+  // An app may hide STOP, but not the way back: a stop engaged elsewhere still draws it, for Resume.
+  const stopShown =
+    Boolean(runtimeActionClient.engageRuntimeStop) && (application.runtime_policy.show_stop !== false || stopped);
   // Not asserted, or the engage failed: STOP must be resendable. Not while a normal STOP is in flight.
   const stopNeedsReassert =
     (runtimeStop.state?.stopped === true && !runtimeStop.state.asserted) || runtimeStop.engageUnconfirmed;
