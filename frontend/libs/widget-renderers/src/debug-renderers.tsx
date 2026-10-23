@@ -111,7 +111,7 @@ function TopicEchoWidget({
       {hidesTitle(descriptor.widget.settings) ? null : (
         <header className="bloom-widget-head">
           <strong>{descriptor.widget.title}</strong>
-          <span className="bloom-widget-readout">{headerNote}</span>
+          {headerNote ? <span className="bloom-widget-readout">{headerNote}</span> : null}
         </header>
       )}
       {showDetails ? (

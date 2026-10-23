@@ -14,6 +14,7 @@ export type TopicEchoSettings = {
   maxMessages: number;
   messageType: string;
   prettyPrint: boolean;
+  show_age?: boolean;
   show_details: boolean;
   topic: string;
 };
@@ -23,6 +24,7 @@ export const TOPIC_ECHO_DEFAULT_SETTINGS: TopicEchoSettings = {
   maxMessages: 100,
   messageType: "",
   prettyPrint: true,
+  show_age: true,
   show_details: true,
   topic: "",
 };
@@ -37,6 +39,7 @@ export const topicEchoContract = createContract(
     { key: "prettyPrint", label: "Pretty print", type: "boolean", required: true },
     { key: "hide_title", label: "Hide the card title", type: "boolean", required: false },
     { key: "show_details", label: "Show runtime details", type: "boolean", required: true },
+    { key: "show_age", label: "Show last-message age", type: "boolean", required: false },
   ],
   TOPIC_ECHO_DEFAULT_SETTINGS,
   validateTopicEchoSettings,
@@ -52,6 +55,7 @@ function validateTopicEchoSettings(
     ...validateNumber(settings, "maxMessages", { min: 1 }),
     ...validateBoolean(settings, "prettyPrint"),
     ...validateBoolean(settings, "show_details"),
+    ...("show_age" in settings && settings.show_age !== undefined ? validateBoolean(settings, "show_age") : []),
   ];
   if (errors.length > 0) return fail(errors);
   return succeed(settings as TopicEchoSettings);
