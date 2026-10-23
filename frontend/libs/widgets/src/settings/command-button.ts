@@ -6,10 +6,17 @@ import {
   succeed,
   validateBoolean,
   validateOneOf,
+  validateNumber,
   validateString,
   type WidgetSettingsValidationError,
   type WidgetSettingsValidationResult,
 } from "./validation";
+
+/**
+ * A held command button repeats at most this often: the backend's default
+ * per-topic runtime limit (BLOOM_RUNTIME_COMMAND_RATE_LIMIT_PER_SECOND).
+ */
+export const MAX_COMMAND_REPEAT_HZ = 60;
 
 export type CommandActionFeedbackMode = "none" | "progress" | "result";
 
@@ -40,6 +47,14 @@ export type CommandButtonSettings = {
   messageType?: string;
   payload?: unknown;
   presetId?: string;
+  /**
+   * With `momentary`, publish the payload this many times a second while the
+   * button is held, then the released payload once. 0 or unset sends it once.
+   *
+   * Each publish is an HTTP request, so a fast rate needs a larger
+   * BLOOM_HTTP_RATE_LIMIT_PER_MINUTE on the backend.
+   */
+  repeat_hz?: number;
   runtime_binding?: TeleopFrameRuntimeBinding;
   /** The screen a navigation button opens; naming one is what makes it navigate. */
   targetScreenId?: string;
@@ -84,6 +99,7 @@ export const commandButtonContract = createContract(
     { key: "pressed_label", label: "Label while held", type: "text", required: false },
     { key: "released_label", label: "Label when released", type: "text", required: false },
     { key: "releasedPayload", label: "Payload on release", type: "json", required: false },
+    { key: "repeat_hz", label: "Repeat while held (Hz, 0 = once)", type: "number", required: false },
     // Press twice to move: the guard on every joint-target button.
     { key: "confirm_press", label: "Confirm the press", type: "boolean", required: false },
     { key: "confirm_label", label: "Confirm label", type: "text", required: false },
@@ -125,6 +141,9 @@ function validateCommandButtonSettings(
       ? validateString(settings, "targetScreenId", { allowEmpty: true })
       : []),
   ];
+  if ("repeat_hz" in settings && settings.repeat_hz !== undefined) {
+    errors.push(...validateNumber(settings, "repeat_hz", { min: 0, max: MAX_COMMAND_REPEAT_HZ }));
+  }
   if ("runtime_binding" in settings && settings.runtime_binding !== undefined) {
     errors.push(...validateTeleopFrameRuntimeBinding(settings.runtime_binding));
   }

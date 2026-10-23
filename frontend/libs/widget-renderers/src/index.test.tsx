@@ -370,6 +370,94 @@ describe("widget renderer registry", () => {
     expect(button).not.toHaveAttribute("data-confirmed");
   });
 
+  it("repeats the pressed payload at repeat_hz while held, then sends the release once", () => {
+    vi.useFakeTimers();
+    try {
+      const descriptor = renderScreenDescriptors(
+        withSnakeSettings({ repeat_hz: 10 }),
+        createDefaultWidgetRegistry(),
+      )[0];
+      if (!descriptor) throw new Error("Missing momentary button descriptor.");
+      const onActionIntent = vi.fn();
+
+      render(<div>{renderWidgetDescriptor(descriptor, { onActionIntent })}</div>);
+
+      const button = screen.getByRole("button", { name: "Hold Snake" });
+      fireEvent.pointerDown(button, { pointerId: 1 });
+      act(() => {
+        vi.advanceTimersByTime(350);
+      });
+      fireEvent.pointerUp(button, { pointerId: 1 });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(onActionIntent.mock.calls.map(([intent]) => intent.payload)).toEqual([
+        "{data: true}",
+        "{data: true}",
+        "{data: true}",
+        "{data: true}",
+        "{data: false}",
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stops repeating when a held button is released by STOP", () => {
+    vi.useFakeTimers();
+    try {
+      const descriptor = renderScreenDescriptors(
+        withSnakeSettings({ repeat_hz: 20 }),
+        createDefaultWidgetRegistry(),
+      )[0];
+      if (!descriptor) throw new Error("Missing momentary button descriptor.");
+      const onActionIntent = vi.fn();
+      const { rerender } = render(
+        <div>{renderWidgetDescriptor(descriptor, { neutralRevision: 0, onActionIntent })}</div>,
+      );
+
+      fireEvent.pointerDown(screen.getByRole("button", { name: "Hold Snake" }), { pointerId: 1 });
+      act(() => {
+        vi.advanceTimersByTime(100);
+      });
+      rerender(<div>{renderWidgetDescriptor(descriptor, { neutralRevision: 1, onActionIntent })}</div>);
+      const sentBeforeStop = onActionIntent.mock.calls.length;
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(onActionIntent.mock.calls.length).toBe(sentBeforeStop);
+      expect(onActionIntent.mock.calls.at(-1)?.[0].payload).toBe("{data: false}");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("caps a hand-edited repeat rate at 60 Hz", () => {
+    vi.useFakeTimers();
+    try {
+      const descriptor = renderScreenDescriptors(
+        withSnakeSettings({ repeat_hz: 1000 }),
+        createDefaultWidgetRegistry(),
+      )[0];
+      if (!descriptor) throw new Error("Missing momentary button descriptor.");
+      const onActionIntent = vi.fn();
+
+      render(<div>{renderWidgetDescriptor(descriptor, { onActionIntent })}</div>);
+
+      fireEvent.pointerDown(screen.getByRole("button", { name: "Hold Snake" }), { pointerId: 1 });
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      // The press itself plus at most 60 repeats in one second.
+      expect(onActionIntent.mock.calls.length).toBeLessThanOrEqual(61);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("latches a momentary button for switch, dwell and keyboard activation", () => {
     // Scanning, dwell and the keyboard all arrive as click(): a pointer-only
     // hold would leave Hold Snake unreachable for the people who need it most.
@@ -1592,6 +1680,16 @@ const momentaryButtonScreen: ScreenConfig = {
     },
   ],
 };
+
+function withSnakeSettings(settings: Record<string, unknown>): ScreenConfig {
+  return {
+    ...momentaryButtonScreen,
+    widgets: momentaryButtonScreen.widgets.map((widget) => ({
+      ...widget,
+      settings: { ...widget.settings, ...settings },
+    })),
+  };
+}
 
 function pushToggle(value: unknown, revision: number, by: string) {
   applyCommandStateMessage({

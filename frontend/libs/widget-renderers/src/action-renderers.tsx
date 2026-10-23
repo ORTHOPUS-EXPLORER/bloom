@@ -6,6 +6,7 @@ import {
   getStringSetting,
   hidesTitle,
   localizeOperatorText,
+  MAX_COMMAND_REPEAT_HZ,
   readModeRequestData,
   resolveCommandPayload,
   type WidgetActionIntent,
@@ -143,26 +144,25 @@ export function CommandLikeWidget({
   // Repeat the pressed payload while held. Every release path clears
   // isMomentaryPressedRef before it sends the released payload, so a tick that
   // lands between the release and this effect's cleanup sends nothing after it.
-  // A tick is dropped while an earlier publish is still in flight: queueing it
+  // A tick is dropped while an earlier repeat is still in flight: queueing it
   // would only grow a backlog the release then has to wait behind.
-  const publishMomentaryPayloadRef = useRef<(payloadKey: "payload" | "releasedPayload") => void>(() => {});
-  const momentaryPublishChainRef = useRef<Promise<unknown>>(Promise.resolve());
-  const momentaryPublishesPendingRef = useRef(0);
+  const repeatPressRef = useRef(() => {});
+  const repeatsPendingRef = useRef(0);
   useEffect(() => {
-    if (!isMomentaryPressed || repeatHz <= 0) {
+    if (!isMomentaryHeld || repeatHz <= 0) {
       return;
     }
     // Rounded up: timers truncate the period, and 16 ms instead of 16.7 is 62 Hz, past the backend's 60/s.
     const timer = setInterval(
       () => {
-        if (isMomentaryPressedRef.current && momentaryPublishesPendingRef.current === 0) {
-          publishMomentaryPayloadRef.current("payload");
+        if (isMomentaryPressedRef.current && repeatsPendingRef.current === 0) {
+          repeatPressRef.current();
         }
       },
       Math.ceil(1000 / repeatHz),
     );
     return () => clearInterval(timer);
-  }, [isMomentaryPressed, repeatHz]);
+  }, [isMomentaryHeld, repeatHz]);
 
   const handlePress = () => {
     if (disabled) {
@@ -265,11 +265,8 @@ export function CommandLikeWidget({
     };
   }, []);
   // Press and release are absolute payloads, each sent once; the server orders them.
-  const publishMomentary = (value: "pressed" | "released") => {
-    if (!topic || !messageType || !onActionIntent) {
-      return;
-    }
-    const outcome = onActionIntent({
+  const momentaryIntent = (value: "pressed" | "released") =>
+    ({
       type: "topic-publish",
       widgetId,
       widgetKind: descriptor.widget.kind,
@@ -281,7 +278,12 @@ export function CommandLikeWidget({
           ? resolveCommandPayload(descriptor.widget.settings, messageType)
           : resolveReleasedPayload(topic, descriptor.widget.settings.releasedPayload),
       ...(value === "released" ? { release: true } : {}),
-    } satisfies WidgetActionIntent);
+    }) satisfies WidgetActionIntent;
+  const publishMomentary = (value: "pressed" | "released") => {
+    if (!topic || !messageType || !onActionIntent) {
+      return;
+    }
+    const outcome = onActionIntent(momentaryIntent(value));
     if (value !== "pressed") {
       return;
     }
@@ -300,7 +302,21 @@ export function CommandLikeWidget({
       settle(outcome);
     }
   };
-  publishMomentaryPayloadRef.current = publishMomentaryPayload;
+  // A repeat is the press again: one refused (a rate limit) is dropped, not taken as the end of the hold.
+  repeatPressRef.current = () => {
+    if (!topic || !messageType || !onActionIntent) {
+      return;
+    }
+    const outcome = onActionIntent(momentaryIntent("pressed"));
+    if (outcome instanceof Promise) {
+      repeatsPendingRef.current += 1;
+      outcome
+        .catch(() => undefined)
+        .finally(() => {
+          repeatsPendingRef.current -= 1;
+        });
+    }
+  };
 
   const layout = getBooleanSetting(descriptor.widget.settings, "hide_title", false) ? "bare" : "card";
   const showsTitle =
