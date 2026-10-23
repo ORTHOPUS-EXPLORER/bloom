@@ -369,12 +369,6 @@ def dispatch_service_call_preset(
     if not preset.topic or not preset.message_type:
         raise reject(422, "service-call preset needs a service name in `topic` and a type in `message_type`")
 
-    # The request fields, read like a topic preset's message. Empty is a Trigger call.
-    try:
-        payload = resolve_runtime_action_payload(preset)
-    except ValueError as exc:
-        raise reject(422, str(exc)) from exc
-
     stop_controller = get_runtime_stop_controller(request)
     stop_reason = stop_controller.rejection_reason()
     if stop_reason is not None:
