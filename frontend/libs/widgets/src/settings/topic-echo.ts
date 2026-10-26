@@ -11,6 +11,8 @@ import {
 export type TopicEchoSettings = {
   hide_title?: boolean;
   fieldPath: string;
+  /** The newest value on the title row, one line, instead of a block under it. Ignored with details on. */
+  inline_value?: boolean;
   maxMessages: number;
   messageType: string;
   prettyPrint: boolean;
@@ -40,6 +42,7 @@ export const topicEchoContract = createContract(
     { key: "hide_title", label: "Hide the card title", type: "boolean", required: false },
     { key: "show_details", label: "Show runtime details", type: "boolean", required: true },
     { key: "show_age", label: "Show last-message age", type: "boolean", required: false },
+    { key: "inline_value", label: "Show the value beside the title", type: "boolean", required: false },
   ],
   TOPIC_ECHO_DEFAULT_SETTINGS,
   validateTopicEchoSettings,
@@ -56,6 +59,9 @@ function validateTopicEchoSettings(
     ...validateBoolean(settings, "prettyPrint"),
     ...validateBoolean(settings, "show_details"),
     ...("show_age" in settings && settings.show_age !== undefined ? validateBoolean(settings, "show_age") : []),
+    ...("inline_value" in settings && settings.inline_value !== undefined
+      ? validateBoolean(settings, "inline_value")
+      : []),
   ];
   if (errors.length > 0) return fail(errors);
   return succeed(settings as TopicEchoSettings);

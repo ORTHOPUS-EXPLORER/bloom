@@ -1091,6 +1091,35 @@ describe("widget renderer registry", () => {
     expect(screen.getByTestId("gated-stick")).toHaveTextContent("5");
   });
 
+  it("puts the newest value on the title row, one line, when inline_value is on", () => {
+    const widget = topicEchoScreen.widgets[0];
+    if (!widget) throw new Error("Missing topic echo widget.");
+    const [descriptor] = renderScreenDescriptors(
+      { ...topicEchoScreen, widgets: [{ ...widget, settings: { ...widget.settings, inline_value: true } }] },
+      createDefaultWidgetRegistry(),
+    );
+    if (!descriptor) throw new Error("Missing topic echo descriptor.");
+    const status = (data: string) => ({
+      receivedAt: "2026-06-02T10:00:00.000Z",
+      topic: "/joint_states",
+      value: { data },
+    });
+
+    render(
+      <div>
+        {renderWidgetDescriptor(descriptor, {
+          dataByWidgetId: {
+            "joint-state-echo": { messages: [status("busy"), status("ready")], type: "topic-echo" },
+          },
+        })}
+      </div>,
+    );
+
+    const inline = document.querySelector(".bloom-widget-head .bloom-topic-echo-inline");
+    expect(inline?.textContent).toBe('{"data":"ready"}');
+    expect(document.querySelector("pre.bloom-topic-echo")).toBeNull();
+  });
+
   it("hides the last-message age when show_age is off", () => {
     const widget = topicEchoScreen.widgets[0];
     if (!widget) throw new Error("Missing topic echo widget.");

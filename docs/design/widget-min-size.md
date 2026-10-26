@@ -18,7 +18,7 @@ grouped row below, which already accounts for it.
 | `command-button` **in a labelled group** | 140×88 | — |
 | `toggle` **in a labelled group** | 200×88 | — |
 | `command-button` | 140×104 | 170×152 | 56 button + a two-line action label under it | modes 150×130, lab 120×82 |
-| `topic-echo` | 226×200 | 280×280 | a twist is 8 lines of mono; the action row adds 96 with details on | `drive-fault` 120×60 |
+| `topic-echo` | 160×96 | 280×280 | one line of mono under the title, or beside it with `inline_value`; longer messages scroll inside the card; the action row adds 96 with details on | `drive-fault` 120×60 |
 | `topic-plot` / `gauge` | 280×180 | 320×240 | a 30 s trace below 280 wide is decoration | ok |
 | `label` | 120×24 | — | at 12 px uppercase, 20 px tall cuts the descenders; 24 is the floor | lab labels h=20 |
 | `position-library` | 420×300 | 480×360 | a pose row is 48 tall; fewer than 4 visible is a list that lies | ok |
@@ -71,7 +71,7 @@ export const WIDGET_MIN_SIZE = {
   'toggle:grouped':         { off: [200, 88], on: [200, 88] },
   // settings.layout "inline": title and commanded state beside the button
   'toggle:inline':          { off: [360, 88], on: [360, 88] },
-  'topic-echo':        { off: [226, 200], on: [280, 280] },
+  'topic-echo':        { off: [160, 96], on: [280, 280] },
   'topic-plot':        { off: [280, 180], on: [320, 240] },
   gauge:               { off: [280, 180], on: [320, 240] },
   label:               { off: [120,  24], on: [120,  24] },

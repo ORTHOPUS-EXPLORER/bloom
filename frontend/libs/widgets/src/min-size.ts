@@ -22,7 +22,8 @@ export const WIDGET_MIN_SIZE: Readonly<Record<string, { off: WidgetMinSize; on: 
   "toggle:grouped": { off: [200, 88], on: [200, 88] },
   // Title and commanded state beside the button instead of above it.
   "toggle:inline": { off: [360, 88], on: [360, 88] },
-  "topic-echo": { off: [226, 200], on: [280, 280] },
+  // One mono line under the title (or beside it, inline_value); longer messages scroll inside the card.
+  "topic-echo": { off: [160, 96], on: [280, 280] },
   "topic-plot": { off: [280, 180], on: [320, 240] },
   gauge: { off: [280, 180], on: [320, 240] },
   label: { off: [120, 24], on: [120, 24] },

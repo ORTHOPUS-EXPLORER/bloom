@@ -1167,6 +1167,18 @@ button.bloom-toggle-segment {
   white-space: pre;
 }
 
+/* inline_value: the newest value on the title row, cut with an ellipsis rather than wrapped. */
+.bloom-topic-echo-inline {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--bloom-ink);
+  font-family: var(--bloom-font-mono);
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* The empty-state sentence is prose, not a message: it wraps inside the card. */
 .bloom-topic-echo[data-empty="true"] {
   white-space: pre-wrap;

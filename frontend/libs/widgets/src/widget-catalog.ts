@@ -216,7 +216,7 @@ export const DEFAULT_WIDGET_DEFINITIONS: readonly WidgetDefinition[] = [
     description: "Displays recent messages from a configured runtime topic in a console-like view.",
     defaultTitle: PALETTE_WIRING["topic-echo"]?.title ?? "",
     defaultSettings: wired("topic-echo"),
-    defaultLayout: { width: 460, height: 280, minWidth: 226, minHeight: 200 },
+    defaultLayout: { width: 460, height: 280, minWidth: 160, minHeight: 96 },
     runtimeRequirements: ["data-source"],
     maturity: "ready",
     availability: { editor: true, runtime: true },

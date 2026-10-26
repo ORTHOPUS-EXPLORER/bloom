@@ -49,6 +49,8 @@ describe("the widget minimum-size contract", () => {
     expect(minSizeFor("slider", {})).toEqual([260, 104]);
     // A hidden title frees its 32 px even on the square card: the pad keeps 244 px, past its 240 floor.
     expect(minSizeFor("joystick", { hide_title: true })).toEqual([280, 248]);
+    // A one-line status echo no longer needs the eight-line height of a twist.
+    expect(minSizeFor("topic-echo", {})).toEqual([160, 96]);
     expect(minSizeFor("gauge", { hide_title: true, show_details: true })).toEqual([320, 208]);
     expect(minSizeFor("camera", {})).toBeNull();
   });

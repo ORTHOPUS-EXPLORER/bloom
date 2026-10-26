@@ -69,6 +69,8 @@ function TopicEchoWidget({
   const word = (text: string) => localizeOperatorText(text, language);
   const prettyPrint = getBooleanSetting(descriptor.widget.settings, "prettyPrint", true);
   const showAge = getBooleanSetting(descriptor.widget.settings, "show_age", true);
+  // A single-line status reads best beside its name; the details list keeps the block.
+  const inlineValue = getBooleanSetting(descriptor.widget.settings, "inline_value", false) && !showDetails;
   const messages = data?.type === "topic-echo" ? data.messages : [];
   const [copyStatus, setCopyStatus] = useState<"copied" | "failed" | "idle">("idle");
   // The last message showing at Clear. A full buffer keeps its length, so a count would hide every newer message.
@@ -106,11 +108,22 @@ function TopicEchoWidget({
     setPausedMessages([]);
   };
 
+  const inlineText = latest ? formatEchoMessage(latest.value, false).replace(/\s*\n\s*/g, "  ") : "\u2014";
+
   return (
-    <div className="bloom-topic-debug-widget bloom-info-card" data-show-details={showDetails ? "true" : "false"}>
-      {hidesTitle(descriptor.widget.settings) ? null : (
+    <div
+      className="bloom-topic-debug-widget bloom-info-card"
+      data-inline-value={inlineValue ? "true" : undefined}
+      data-show-details={showDetails ? "true" : "false"}
+    >
+      {hidesTitle(descriptor.widget.settings) && !inlineValue ? null : (
         <header className="bloom-widget-head">
-          <strong>{descriptor.widget.title}</strong>
+          {hidesTitle(descriptor.widget.settings) ? null : <strong>{descriptor.widget.title}</strong>}
+          {inlineValue ? (
+            <output className="bloom-topic-echo-inline" title={inlineText}>
+              {inlineText}
+            </output>
+          ) : null}
           {headerNote ? <span className="bloom-widget-readout">{headerNote}</span> : null}
         </header>
       )}
@@ -144,9 +157,11 @@ function TopicEchoWidget({
           </button>
         </div>
       ) : null}
-      <pre className="bloom-topic-echo" data-empty={visibleMessages.length === 0 ? "true" : undefined}>
-        {echoText}
-      </pre>
+      {inlineValue ? null : (
+        <pre className="bloom-topic-echo" data-empty={visibleMessages.length === 0 ? "true" : undefined}>
+          {echoText}
+        </pre>
+      )}
       {!showDetails ? <span className="sr-only">{visibleMessages.length} messages</span> : null}
       <span aria-live="polite" className="bloom-topic-debug-status">
         {copyStatus === "copied" ? word("Copied to clipboard.") : null}
