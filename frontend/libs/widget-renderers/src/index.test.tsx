@@ -828,9 +828,15 @@ describe("widget renderer registry", () => {
     const joystickZone = getJoystickZone();
     fireEvent.pointerDown(joystickZone, { clientX: 200, clientY: 150, pointerId: 1 });
 
-    // Pad recipe: knob S × 0.26, full deflection travels 37% of the pad from centre.
+    // Pad recipe: knob S × 0.26; at full deflection its centre sits on the dashed ring.
     const knob = document.querySelector<HTMLElement>(".bloom-joystick-knob");
-    expect(knob).toHaveStyle({ width: "56px", height: "56px", left: "87%", top: "50%" });
+    const ring = document.querySelector<HTMLElement>(".bloom-joystick-ring");
+    const ringRadius = Math.round(Number.parseFloat(ring?.style.width ?? "0") / 2);
+    expect(knob).toHaveStyle({ width: "56px", height: "56px" });
+    expect(knob?.style.left).toBe(`calc(50% + ${ringRadius}px)`);
+    expect(knob?.style.top).toBe("calc(50% - 0px)");
+    expect(ring).toHaveAttribute("data-at-limit", "true");
+    expect(document.querySelector<HTMLElement>(".bloom-joystick-vector")?.style.width).toBe(`${ringRadius}px`);
   });
 
   it("draws a square pad inside a card that is not square (pad recipe rule 3)", () => {

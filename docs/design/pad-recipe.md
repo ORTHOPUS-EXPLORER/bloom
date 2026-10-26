@@ -8,24 +8,24 @@ one review cycle, each time as a "small fix".
 Every number derives from one input — the pad's edge length `S`.
 
 ```
-inset      =  8          label edge to pad edge
+inset      =  4          label edge to pad edge
 labelWidth = 64          fits "Right ▶" at the 17px direction-word floor
-gap        = 12          label edge to ring, all four sides
+gap        =  6          label edge to ring, all four sides
 lineHeight = 20
 
-block      = inset + labelWidth      = 72
-topInset   = block - lineHeight      = 52     (so the text box bottom also lands at 72)
-ring       = S - 2 * (block + gap)   = S - 168
+block      = inset + labelWidth      = 68
+topInset   = block - lineHeight      = 48     (so the text box bottom also lands at 68)
+ring       = S - 2 * (block + gap)   = S - 148
 deadzone   = ring * 0.2                        the real 0.2 axis dead zone, drawn to scale
 knob       = S * 0.26
-travel     = 37% of S                          knob centre displacement at full deflection
+travel     = ring / 2                          knob centre displacement at full deflection: it stops on the ring
 ```
 
 | pad | S | ring | dead zone | knob |
 | --- | --- | --- | --- | --- |
-| bench Translation / Rotation | 376 | 208 | 42 | 98 |
-| corrected-Drive pads | 340 | 172 | 34 | 88 |
-| operator Translation / Rotation | 300 | 132 | 26 | 78 |
+| bench Translation / Rotation | 376 | 228 | 46 | 98 |
+| corrected-Drive pads | 340 | 192 | 38 | 88 |
+| operator Translation / Rotation | 300 | 152 | 30 | 78 |
 
 ## Four rules that came from getting this wrong
 

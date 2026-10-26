@@ -282,6 +282,25 @@
   border: 2px solid var(--bloom-hairline-strong);
 }
 
+/* Full deflection: the knob centre has reached the ring, which stops reading as a dashed guide. */
+.bloom-joystick-ring[data-at-limit="true"] {
+  border-style: solid;
+  border-color: var(--bloom-primary);
+}
+
+/* Centre to knob: direction and strength at a glance, under the knob. */
+.bloom-joystick-vector {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  height: 4px;
+  border-radius: 2px;
+  opacity: 0.55;
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
 .bloom-joystick-knob {
   position: absolute;
   z-index: 2;

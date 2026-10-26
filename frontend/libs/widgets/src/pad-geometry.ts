@@ -13,9 +13,9 @@ export type PadGeometry = {
   travel: number;
 };
 
-const PAD_INSET = 8;
+const PAD_INSET = 4;
 const PAD_LABEL_WIDTH = 64;
-const PAD_GAP = 12;
+const PAD_GAP = 6;
 const PAD_LINE_HEIGHT = 20;
 
 export function padGeometry(size: number, deadzone = 0.2): PadGeometry {
@@ -32,7 +32,8 @@ export function padGeometry(size: number, deadzone = 0.2): PadGeometry {
     ring,
     deadzone: Math.round(ring * deadzone),
     knob: Math.round(size * 0.26),
-    travel: Math.round(size * 0.37),
+    // The dashed ring is full deflection: the knob centre stops on it, so it is a limit the eye can trust.
+    travel: Math.round(ring / 2),
   };
 }
 

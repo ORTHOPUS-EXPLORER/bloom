@@ -64,6 +64,9 @@ export function JoystickPrimitive({
   const pointerIdRef = useRef<number | null>(null);
   const [vector, setVector] = useState<JoystickVector>({ x: 0, y: 0 });
   const geometry = padGeometry(size, Math.max(0, Math.min(1, deadzone)));
+  // Drawn against the ring, which is full deflection; the finger keeps the whole pad for precision.
+  const magnitude = Math.min(1, Math.hypot(vector.x, vector.y));
+  const angle = (Math.atan2(vector.y, vector.x) * 180) / Math.PI;
 
   useEffect(() => {
     onInteractionEndRef.current = onInteractionEnd;
@@ -234,6 +237,7 @@ export function JoystickPrimitive({
       <span
         aria-hidden="true"
         className="bloom-joystick-ring"
+        data-at-limit={magnitude >= 0.99 ? "true" : undefined}
         style={{ width: geometry.ring, height: geometry.ring }}
       />
       <span
@@ -245,14 +249,25 @@ export function JoystickPrimitive({
           ["--bloom-joystick-deadzone" as string]: `${deadzone}`,
         }}
       />
+      {magnitude > 0 ? (
+        <span
+          aria-hidden="true"
+          className="bloom-joystick-vector"
+          style={{
+            width: `${magnitude * geometry.travel}px`,
+            transform: `translateY(-50%) rotate(${-angle}deg)`,
+            background: color,
+          }}
+        />
+      ) : null}
       <span
         aria-hidden="true"
         className="bloom-joystick-knob"
         style={{
           width: geometry.knob,
           height: geometry.knob,
-          left: `${50 + vector.x * 37}%`,
-          top: `${50 - vector.y * 37}%`,
+          left: `calc(50% + ${vector.x * geometry.travel}px)`,
+          top: `calc(50% - ${vector.y * geometry.travel}px)`,
           background: color,
         }}
       />

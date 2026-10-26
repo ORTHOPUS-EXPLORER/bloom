@@ -160,11 +160,11 @@ describe("the primary target contract", () => {
 
 describe("the pad recipe", () => {
   it.each([
-    [376, 208, 42, 98],
-    [340, 172, 34, 88],
-    [300, 132, 26, 78],
+    [376, 228, 46, 98],
+    [340, 192, 38, 88],
+    [300, 152, 30, 78],
   ])("derives a %i px pad from its edge alone", (size, ring, deadzone, knob) => {
-    expect(padGeometry(size)).toMatchObject({ block: 72, topInset: 52, gap: 12, ring, deadzone, knob });
+    expect(padGeometry(size)).toMatchObject({ block: 68, topInset: 48, gap: 6, ring, deadzone, knob });
   });
 
   it("keeps STOP in the bench rail", () => {
